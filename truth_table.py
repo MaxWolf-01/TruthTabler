@@ -9,7 +9,7 @@ class TruthTable:
     @staticmethod
     def getVariables(expr):
         return sorted({x for x in expr if x.isalpha() and len(x) == 1})
-
+    
     def __init__(self, expr: list):
         self.variables = self.getVariables(expr)
         self.table = self.createTT(len(self.variables))

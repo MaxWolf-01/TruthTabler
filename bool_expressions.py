@@ -60,7 +60,7 @@ class AtomicExpression:
 
 class ExpressionSolver:
     """
-    takes an atomicExpression to evalutate it
+    takes an atomicExpression to evalutate it + a TruthTable to look up values of variable names
     """
 
     def __init__(self, truthTable: TruthTable, atomic_expr: AtomicExpression = None):
@@ -101,53 +101,57 @@ class ExpressionTree:
         self.expr = expr
         self.TT = truthTable
         if is_root:
-            self.translateOperators()
+            self.expr = self.translateOperators()
 
     def solve(self) -> list:
         xS = ExpressionSolver(self.TT)
         while self.expr:
-            if len(self.expr) == 1:  # [[result]]
+            if len(self.expr) == 1:  # -->[[result]]
                 return self.expr[0]
             elif len(self.expr) == 3 or len(self.expr) == 2:
                 return xS.solve(AtomicExpression(self.expr))
             elif not self.expr.__contains__('('):
                 operators = []
-                for i in range(len(self.expr)):
-                    if self.expr[i] == 'NOT':
-                        self.expr.insert(i, xS.solve(AtomicExpression([self.expr.pop(i) for i in [i, i]])))
-                        i += 1
+                idx = 0
+                while idx < len(self.expr):
+                    if self.expr[idx] == 'NOT':
+                        self.expr.insert(idx, xS.solve(AtomicExpression([self.expr.pop(i) for i in [idx, idx]])))
+                        idx += 1
                     else:
-                        if self.expr[i] in list(_OPERATORS.keys()):
-                            operators.append(self.expr[i])
-
-                first_operator = list(_OPERATORS.keys())[min([list(_OPERATORS.keys())
-                                                             .index(op) for op in operators])]
+                        if self.expr[idx] in list(_OPERATORS.keys()):
+                            operators.append(self.expr[idx])
+                        idx += 1
+                first_operator = list(_OPERATORS.keys())[
+                            min([list(_OPERATORS.keys()).index(op) for op in operators])
+                                                        ]
                 first_op_idx = self.expr.index(first_operator)
-                result = xS.solve(AtomicExpression([self.expr.pop(i) for i in [first_op_idx-1]*3]))
-                self.expr.insert(first_op_idx-1, result)
+                result = xS.solve(AtomicExpression([self.expr.pop(i) for i in [first_op_idx - 1] * 3]))
+                self.expr.insert(first_op_idx - 1, result)
             else:
                 for i in range(len(self.expr)):
                     if self.expr[i] == '(':
                         inner_expr = []
                         for _ in range(i, len(self.expr)):
-                            if self.expr[i+1] == ')':
-                                self.expr = self.expr[i+2:] + self.expr[:i]  # remove brackets
+                            if self.expr[i + 1] == ')':  # todo additional '('
+                                self.expr = self.expr[i + 2:] + self.expr[:i]  # remove brackets
                                 xTree = ExpressionTree(inner_expr, self.TT, False)
                                 self.expr.insert(i, xTree.solve())
                                 break
-                            inner_expr.append(self.expr.pop(i+1))
+                            # elif
+                            inner_expr.append(self.expr.pop(i + 1))
                         if inner_expr:
                             break
 
     def translateOperators(self):
         """
-        turns user input operators into keys of _FUNCTIONS
+        turns user input operators into keys of _OPERATORS / their function names
         """
-        translated = []
+        translated_expr = []
         for x in self.expr:
             for key in _OPERATORS.keys():
                 if x in _OPERATORS[key]:
-                    translated.append(key)
+                    translated_expr.append(key)
                 else:
-                    translated.append(x)
-        return translated
+                    translated_expr.append(x)
+                break
+        return translated_expr

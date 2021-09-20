@@ -1,4 +1,6 @@
 import re
+from copy import deepcopy
+
 from bool_expressions import *
 from prettytable import PrettyTable
 
@@ -27,7 +29,7 @@ class TruthTabler:
     def __str__(self):
         prettyTable = PrettyTable()
 
-        vars_ = self.xTree.TT.variables
+        vars_ = deepcopy(self.xTree.TT.variables)  # deepcopy solves it.. but y exactly
         vars_.append(self.OGexpr)
         field_names = vars_
         prettyTable.field_names = field_names
