@@ -111,22 +111,11 @@ class ExpressionTree:
             elif len(self.expr) == 3 or len(self.expr) == 2:
                 return xS.solve(AtomicExpression(self.expr))
             elif not self.expr.__contains__('('):
-                operators = []
-                idx = 0
-                while idx < len(self.expr):
-                    if self.expr[idx] == 'NOT':
-                        self.expr.insert(idx, xS.solve(AtomicExpression([self.expr.pop(i) for i in [idx, idx]])))
-                        idx += 1
-                    else:
-                        if self.expr[idx] in list(_OPERATORS.keys()):
-                            operators.append(self.expr[idx])
-                        idx += 1
-                first_operator = list(_OPERATORS.keys())[
-                    min([list(_OPERATORS.keys()).index(op) for op in operators])
-                ]
-                first_op_idx = self.expr.index(first_operator)
-                result = xS.solve(AtomicExpression([self.expr.pop(i) for i in [first_op_idx - 1] * 3]))
-                self.expr.insert(first_op_idx - 1, result)
+                self.solve_all_NOT(xS)
+                highest_priority_operator = self.get_highest_priority_operator_idx(self.get_operators())
+                highest_priority_expression = [self.expr.pop(i) for i in [highest_priority_operator - 1] * 3]
+                result = xS.solve(AtomicExpression(highest_priority_expression))
+                self.expr.insert(highest_priority_operator - 1, result)
             else:
                 def solve_inner_expr(expr):
                     xTree = ExpressionTree(expr, self.TT, False)
@@ -145,7 +134,7 @@ class ExpressionTree:
                                          bracket_idxs[0] + 1: bracket_idxs[open_brackets + closed_brackets - 1]]
                             solved_inner_expr = solve_inner_expr(inner_expr)
                             self.expr = self.expr[:bracket_idxs[0]] + \
-                                        self.expr[bracket_idxs[open_brackets + closed_brackets-1]+1:]
+                                        self.expr[bracket_idxs[open_brackets + closed_brackets - 1] + 1:]
                             self.expr.insert(bracket_idxs[0], solved_inner_expr)
 
     def translateOperators(self):
@@ -161,3 +150,17 @@ class ExpressionTree:
                     translated_expr.append(x)
                 break
         return translated_expr
+
+    def solve_all_NOT(self, expressionSolver: ExpressionSolver):
+        for i in range(len(self.expr)):
+            if self.expr[i] == 'NOT':
+                self.expr.insert(i, expressionSolver.solve(AtomicExpression([self.expr.pop(idx) for idx in [i, i]])))
+
+    def get_operators(self):
+        return [x for x in self.expr if x in list(_OPERATORS.keys())]
+
+    def get_highest_priority_operator_idx(self, operators):
+        first_operator = list(_OPERATORS.keys())[
+            min([list(_OPERATORS.keys()).index(op) for op in operators])
+        ]
+        return self.expr.index(first_operator)
