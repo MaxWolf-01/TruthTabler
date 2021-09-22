@@ -6,9 +6,9 @@ from prettytable import PrettyTable
 
 
 class TruthTabler:
-    def __init__(self, expr):
-        self.check_validness(expr)
+    def __init__(self, expr: str):
         self.expr = self.prepare(expr)
+        self.check_validness(expr)
         self.OGexpr = expr
         self.xTree = ExpressionTree(self.expr, TruthTable(self.expr), True)
         self.result = self.xTree.solve()
@@ -24,19 +24,20 @@ class TruthTabler:
         turns the expression into a list, using '(', ')' and ' ' as delimiters. Lower and uppercase letters are treated
         as a single variable
         """
-        return [e for e in re.split('([(| |)])', expr.upper()) if e != " " and e != ""]
+        return [e for e in re.split('([(| |)|!])', expr.upper()) if e != " " and e != ""]
 
     def __str__(self):
         prettyTable = PrettyTable()
 
-        vars_ = deepcopy(self.xTree.TT.variables)  # deepcopy solves it.. but y exactly
-        vars_.append(self.OGexpr)
-        field_names = vars_
+        field_names = deepcopy(self.xTree.TT.variables)
+        field_names.append(self.OGexpr)
+        field_names.append('#')
         prettyTable.field_names = field_names
 
         rows = [list(row) for row in self.xTree.TT.table]
         for i in range(len(rows)):
             rows[i].append(self.result[i])
+            rows[i].append(i)
         prettyTable.add_rows(rows)
 
         return prettyTable.__str__()
