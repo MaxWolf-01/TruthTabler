@@ -67,29 +67,29 @@ class ExpressionSolver:
         self.expr = atomic_expr
         self.TT = truthTable
 
-    def solve(self, atomic_expr=None) -> list:
+    def solve(self, atomic_expr: AtomicExpression = None) -> list:
         self.set_atomic_expr(atomic_expr)
         result = []
         f = self.expr.operator
-        p_q = self.getValues()
-        if len(p_q) == 2:
-            p, q = p_q
-            for i in range(len(p)):
-                result.append(f(p[i], q[i]))
+        values = self.getValues()
+        if len(values) == 2:
+            val1, val2 = values
+            for i in range(len(val1)):
+                result.append(f(val1[i], val2[i]))
         else:
-            p = p_q[0]
-            for val in p:
+            val1 = values[0]
+            for val in val1:
                 result.append(f(val))
         return result
 
     def getValues(self):
-        vars_ = []
+        values = []
         for var in self.expr.variables:
             if type(var) is not list:
-                vars_.append([row[self.TT.variables.index(var)] for row in self.TT.table])
+                values.append([row[self.TT.variables.index(var)] for row in self.TT.table])
             else:
-                vars_.append(var)
-        return vars_
+                values.append(var)
+        return values
 
     def set_atomic_expr(self, a_expr):
         if a_expr is not None:
@@ -122,25 +122,31 @@ class ExpressionTree:
                             operators.append(self.expr[idx])
                         idx += 1
                 first_operator = list(_OPERATORS.keys())[
-                            min([list(_OPERATORS.keys()).index(op) for op in operators])
-                                                        ]
+                    min([list(_OPERATORS.keys()).index(op) for op in operators])
+                ]
                 first_op_idx = self.expr.index(first_operator)
                 result = xS.solve(AtomicExpression([self.expr.pop(i) for i in [first_op_idx - 1] * 3]))
                 self.expr.insert(first_op_idx - 1, result)
             else:
-                for i in range(len(self.expr)):
+                def solve_inner_expr(expr):
+                    xTree = ExpressionTree(expr, self.TT, False)
+                    return xTree.solve()
+
+                bracket_idxs = [i for i in range(len(self.expr)) if self.expr[i] in '()']
+                open_brackets = 0
+                closed_brackets = 0
+                for i in bracket_idxs:
                     if self.expr[i] == '(':
-                        inner_expr = []
-                        for _ in range(i, len(self.expr)):
-                            if self.expr[i + 1] == ')':  # todo additional '('
-                                self.expr = self.expr[i + 2:] + self.expr[:i]  # remove brackets
-                                xTree = ExpressionTree(inner_expr, self.TT, False)
-                                self.expr.insert(i, xTree.solve())
-                                break
-                            # elif
-                            inner_expr.append(self.expr.pop(i + 1))
-                        if inner_expr:
-                            break
+                        open_brackets += 1
+                    elif self.expr[i] == ')':
+                        closed_brackets += 1
+                        if open_brackets == closed_brackets:
+                            inner_expr = self.expr[
+                                         bracket_idxs[0] + 1: bracket_idxs[open_brackets + closed_brackets - 1]]
+                            solved_inner_expr = solve_inner_expr(inner_expr)
+                            self.expr = self.expr[:bracket_idxs[0]] + \
+                                        self.expr[bracket_idxs[open_brackets + closed_brackets-1]+1:]
+                            self.expr.insert(bracket_idxs[0], solved_inner_expr)
 
     def translateOperators(self):
         """
