@@ -13,6 +13,14 @@ def OR(p, q):
     return p or q
 
 
+def NAND(p, q):
+    return not p or not q
+
+
+def NOR(p, q):
+    return not p and not q
+
+
 def XOR(p, q):
     return 1 if p != q else 0
 
@@ -25,15 +33,13 @@ def EQ(p, q):
     return 1 if p == q else 0
 
 
-def nEQ(p, q):
-    return 1 if p != q else 0
-
-
 _OPERATORS = {
     'NOT': ("NOT", "!"),
-    'AND': ("AND", "&&", '^'),
-    'OR': ("OR", "||", 'v'),
-    'XOR': ("XOR", '⊕'),
+    'AND': ("AND", "&&", '*'),
+    'OR': ("OR", "||", '+'),
+    'NAND': ('NAND',),
+    'NOR': ('NOR',),
+    'XOR': ("XOR",),
     'IF': ("IF", "->", '=>', '>'),
     'EQ': ('EQ', "==", "<->", '<=>')
 }

@@ -26,7 +26,7 @@ class TruthTabler:
         """
         return [e for e in re.split('([(| |)|!])', expr.upper()) if e != " " and e != ""]
 
-    def __str__(self):
+    def print_result(self):
         prettyTable = PrettyTable()
 
         field_names = deepcopy(self.xTree.TT.variables)
@@ -40,7 +40,7 @@ class TruthTabler:
             rows[i].append(i)
         prettyTable.add_rows(rows)
 
-        return prettyTable.__str__()
+        print(prettyTable)
 
 
 class BracketException(Exception):
