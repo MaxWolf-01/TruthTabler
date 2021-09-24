@@ -1,8 +1,13 @@
 import re
 from copy import deepcopy
-
 from bool_expressions import *
+from normal_forms import CDNF, CCNF
 from prettytable import PrettyTable
+
+
+class BracketException(Exception):
+    def __init__(self, expr):
+        super(Exception, self).__init__(f'Number of opening and closing brackets do not match: {expr}')
 
 
 class TruthTabler:
@@ -10,8 +15,11 @@ class TruthTabler:
         self.expr = self.prepare(expr)
         self.check_validness(expr)
         self.OGexpr = expr
-        self.xTree = ExpressionTree(self.expr, TruthTable(self.expr), True)
+        self.TT = TruthTable(self.expr)
+        self.xTree = ExpressionTree(self.expr, self.TT, True)
         self.result = self.xTree.solve()
+        self.CDNF = CDNF(self.TT, self.result)
+        self.CCNF = CCNF(self.TT, self.result)
 
     @staticmethod
     def check_validness(expr):
@@ -29,20 +37,21 @@ class TruthTabler:
     def print_result(self):
         prettyTable = PrettyTable()
 
-        field_names = deepcopy(self.xTree.TT.variables)
-        field_names.append(self.OGexpr)
-        field_names.append('#')
-        prettyTable.field_names = field_names
+        field_names = ['#', *deepcopy(self.TT.variables), self.OGexpr]
 
-        rows = [list(row) for row in self.xTree.TT.table]
+        rows = [[i, ] for i in range(len(self.TT.table))]
         for i in range(len(rows)):
+            rows[i].extend(self.TT.table[i])
             rows[i].append(self.result[i])
-            rows[i].append(i)
+
+        prettyTable.field_names = field_names
         prettyTable.add_rows(rows)
+        print(prettyTable, f'\n Optimized expression:' 
+                           f'\n   CDNF:\n \t{self.CDNF}'
+                           f'\n   CCNF:\n \t{self.CCNF}')
 
-        print(prettyTable)
 
-
-class BracketException(Exception):
-    def __init__(self, expr):
-        super(Exception, self).__init__(f'Number of opening and closing brackets do not match: {expr}')
+class Optimizer:
+    def __init__(self, truth_tabler: TruthTabler):
+        self.CDNF = CDNF(truth_tabler.TT.table, truth_tabler.result)
+        self.CCNF = CCNF(truth_tabler.TT.table, truth_tabler.result)

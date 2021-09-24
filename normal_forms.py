@@ -5,7 +5,10 @@ class NormalForm:
     def __init__(self, truth_table: TruthTable, results, nf_params):
         self.TT = truth_table
         self.TT_results = self.set_results(results)
-        self.NF = self.NF(*nf_params)
+        self.result = self.NF(*nf_params)
+
+    def __str__(self):
+        return "".join(self.result)
 
     @staticmethod
     def set_results(results):
@@ -35,19 +38,17 @@ class NormalForm:
                 nf.append(')')
         return nf
 
-    def print(self):
-        print(" ".join(self.NF))
-
 
 class CDNF(NormalForm):
     def __init__(self, truth_table, results):
-        super(CDNF, self).__init__(truth_table, results, [True, '∧', '∨'])
+        super(CDNF, self).__init__(truth_table, results, [True, '&', '||'])
 
 
 class CCNF(NormalForm):
     def __init__(self, truth_table, results):
-        super(CCNF, self).__init__(truth_table, results, [False, '∨', '∧'])
+        super(CCNF, self).__init__(truth_table, results, [False, '||', '&'])
 
 
+# '∧', '∨' dont work in terminal
 # x = CCNF(TruthTable(['p', 'q', 'r'], True), '10100100')
-# x.print()
+# print(x)

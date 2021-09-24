@@ -66,7 +66,7 @@ class AtomicExpression:
         raise InvalidExpressionException("Invalid operator")
 
 
-class ExpressionSolver:
+class AtomicExpressionSolver:
     """
     takes an atomicExpression to evalutate it + a TruthTable to look up values of variable names
     """
@@ -112,7 +112,7 @@ class ExpressionTree:
             self.expr = self.translateOperators()
 
     def solve(self) -> list:
-        xS = ExpressionSolver(self.TT)
+        xS = AtomicExpressionSolver(self.TT)
         while self.expr:
             if len(self.expr) == 1:  # -->[[result]]
                 return self.expr[0]
@@ -158,7 +158,7 @@ class ExpressionTree:
         else:
             raise InvalidExpressionException(f"Invalid variable {var}")
 
-    def solve_all_NOT(self, expressionSolver: ExpressionSolver):
+    def solve_all_NOT(self, expressionSolver: AtomicExpressionSolver):
         i = 0
         while i < len(self.expr):
             if self.expr[i] == 'NOT':
