@@ -34,9 +34,9 @@ def EQ(p, q):
 
 
 _OPERATORS = {
-    'NOT': ("NOT", "!", '¬'),
-    'AND': ("AND", "&&", '∧'),
-    'OR': ("OR", "||", '∨'),
+    'NOT': ("NOT", "!", '¬', '-'),
+    'AND': ("AND", "&&", '&', '·', '∧'),
+    'OR': ("OR", "||", '+', '∨'),
     'NAND': ('NAND',),
     'NOR': ('NOR',),
     'XOR': ("XOR",),
@@ -94,7 +94,15 @@ class AtomicExpressionSolver:
         values = []
         for var in self.expr.variables:
             if type(var) is not list:
-                values.append([row[self.TT.variables.index(var)] for row in self.TT.table])
+                if var == '1':
+                    values.append([1]*len(self.TT.table))
+                elif var == '0':
+                    values.append([0]*len(self.TT.table))
+                else:
+                    try:
+                        values.append([row[self.TT.variables.index(var)] for row in self.TT.table])
+                    except ValueError:
+                        raise InvalidExpressionException('Invalid Operator')
             else:
                 values.append(var)
         return values
@@ -109,7 +117,8 @@ class ExpressionTree:
         self.expr = expr
         self.TT = truthTable
         if is_root:
-            self.expr = self.translateOperators()
+            self.expr = self.translate_operators()
+            self.remove_double_negations()
 
     def solve(self) -> list:
         xS = AtomicExpressionSolver(self.TT)
@@ -126,17 +135,17 @@ class ExpressionTree:
                 self.expr.insert(highest_priority_operator - 1, result)
             else:
                 def solve_inner_expr(expr):
-                    xTree = ExpressionTree(expr, self.TT, False)
+                    xTree = ExpressionTree(expr, self.TT, is_root=False)
                     return xTree.solve()
 
-                bracket_idxs = [i for i in range(len(self.expr)) if type(self.expr[i]) == str and self.expr[i] in '()']
-                inner_expr, inner_expr_end_idx = self.get_inner_expr(bracket_idxs)
+                bracket_idxs = get_bracket_idxs(self.expr)
+                inner_expr_start_indx, inner_expr_end_idx = get_inner_expr_idx(self.expr)
+                inner_expr = self.expr[inner_expr_start_indx + 1: inner_expr_end_idx]
                 solved_inner_expr = solve_inner_expr(inner_expr)
-                self.expr = self.expr[:bracket_idxs[0]] + \
-                            self.expr[bracket_idxs[inner_expr_end_idx - 1] + 1:]
+                self.expr = self.expr[:inner_expr_start_indx] + self.expr[inner_expr_end_idx+1:]
                 self.expr.insert(bracket_idxs[0], solved_inner_expr)
 
-    def translateOperators(self):
+    def translate_operators(self):
         """
         turns user input operators into keys of _OPERATORS / their function names
         """
@@ -175,18 +184,37 @@ class ExpressionTree:
         ]
         return self.expr.index(first_operator)
 
-    def get_inner_expr(self, bracket_idxs):
-        open_brackets = 0
-        closed_brackets = 0
-        for i in bracket_idxs:
-            if self.expr[i] == '(':
-                open_brackets += 1
-            elif self.expr[i] == ')':
-                closed_brackets += 1
-                if open_brackets == closed_brackets:
-                    inner_expr_end_idx = open_brackets + closed_brackets
-                    inner_expr = self.expr[bracket_idxs[0] + 1: bracket_idxs[inner_expr_end_idx - 1]]
-                    return inner_expr, inner_expr_end_idx
+    def remove_double_negations(self):
+        i = 0
+        while i < len(self.expr):
+            if self.expr[i] == 'NOT' == self.expr[i+1]:
+                self.expr.pop(i)
+                self.expr.pop(i)
+                i += 1
+            i += 1
+
+
+def get_bracket_idxs(expr):
+    return [i for i in range(len(expr)) if type(expr[i]) == str and expr[i] in '()']
+
+
+def get_inner_expr_idx(expr):
+    """
+    :return: start and end index of inner expression including brackets
+    """
+    open_brackets = 0
+    closed_brackets = 0
+    bracket_idxs = get_bracket_idxs(expr)
+    for i in bracket_idxs:
+        if expr[i] == '(':
+            open_brackets += 1
+        elif expr[i] == ')':
+            closed_brackets += 1
+            if open_brackets == closed_brackets:
+                # inner_expr = expr_list[bracket_idxs[0] + 1: bracket_idxs[inner_expr_end_idx - 1]]
+                inner_expr_start_idx = bracket_idxs[0]
+                inner_expr_end_idx = bracket_idxs[(open_brackets + closed_brackets) - 1]
+                return inner_expr_start_idx, inner_expr_end_idx
 
 
 class InvalidExpressionException(Exception):
