@@ -1,5 +1,9 @@
-from src.truth_tabler import TruthTabler, BracketException
-from src.bool_expressions import OPERATORS, InvalidExpressionException
+import cProfile
+import pstats
+
+from truth_tabler import TruthTabler
+from bool_expressions import OPERATORS, InvalidExpressionException
+from truth_table import BracketException
 
 if __name__ == '__main__':
 
@@ -17,7 +21,14 @@ if __name__ == '__main__':
             info()
         else:
             try:
-                truthTabler = TruthTabler(user_in)
+                with cProfile.Profile() as pr:
+                    truthTabler = TruthTabler(user_in)
+
+                stats = pstats.Stats(pr)
+                stats.sort_stats(pstats.SortKey.TIME)
+                stats.print_stats()
+
                 truthTabler.print()
             except (BracketException, InvalidExpressionException) as e:
                 print('   ', e)
+

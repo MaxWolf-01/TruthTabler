@@ -1,4 +1,5 @@
-from src.truth_table import TruthTable
+from Exceptions import InvalidExpressionException
+from truth_table import TruthTable, prepare
 
 
 def NOT(p):
@@ -41,8 +42,10 @@ OPERATORS = {
     'NOR': ('NOR',),
     'XOR': ("XOR",),
     'IF': ("IF", "->", '=>', '>'),
-    'EQ': ('EQ', "==", "<->", '<=>')
+    'EQ': ('EQ', "==", "<->", 'EQUALS')
 }
+
+OPERATOR_KEYS = list(OPERATORS.keys())
 
 
 class AtomicExpression:
@@ -63,12 +66,12 @@ class AtomicExpression:
                 return globals()[expression.pop(1)], expression
             except KeyError:
                 pass
-        raise InvalidExpressionException("Invalid operator. Or redundant parentheses around single variable.")
+        raise InvalidExpressionException("Invalid operator_idx. Or redundant parentheses around single variable.")
 
 
 class AtomicExpressionSolver:
     """
-    takes an atomicExpression to evalutate it + a TruthTable to look up values of variable names
+    takes an atomicExpression to evalutate it + x TruthTable to look up values of variable names
     """
 
     def __init__(self, truthTable: TruthTable, atomic_expr: AtomicExpression = None):
@@ -95,14 +98,14 @@ class AtomicExpressionSolver:
         for var in self.expr.variables:
             if type(var) is not list:
                 if var == '1':
-                    values.append([1]*len(self.TT.table))
+                    values.append([1] * len(self.TT.table))
                 elif var == '0':
-                    values.append([0]*len(self.TT.table))
+                    values.append([0] * len(self.TT.table))
                 else:
                     try:
                         values.append([row[self.TT.variables.index(var)] for row in self.TT.table])
                     except ValueError:
-                        raise InvalidExpressionException(f'Invalid Operator: {var}')
+                        raise InvalidExpressionException(f'Invalid Operator: {var} (Must be a single letter!)')
             else:
                 values.append(var)
         return values
@@ -112,104 +115,78 @@ class AtomicExpressionSolver:
             self.expr = a_expr
 
 
-class ExpressionTree:
-    def __init__(self, expr: list, truthTable: TruthTable, is_root: bool):
-        self.expr = expr
-        self.TT = truthTable
-        if self.TT.variables is None:
-            raise InvalidExpressionException
+class ExpressionSolver:
+    """
+    takes an expression parsed by the Node class and solves from most nested equation to the least.
+    """
+    def __init__(self, expr: str, truthTable: TruthTable = None, is_root: bool = False):
+        self.TT = truthTable if truthTable else TruthTable(expr)
         if is_root:
-            self.expr = self.translate_operators()
-            self.remove_double_negations()
+            self.expr = prepare(Node(translate_operators(prepare(expr))).get_expression())
+            remove_all_double_negations(expr)
+        else:
+            self.expr = expr
 
     def solve(self) -> list:
         xS = AtomicExpressionSolver(self.TT)
         while self.expr:
             if len(self.expr) == 1:
-                if len(self.expr[0]) == 1:
-                    return [x[0] for x in self.TT.table]  # -> single variable
-                elif type(self.expr[0]) != list:
-                    raise InvalidExpressionException(self.expr[0])
-                return self.expr[0]  # -->[[result]]
-            elif len(self.expr) == 3 or len(self.expr) == 2:
-                if self.remove_redundant_parentheses_from_single_var():
-                    continue
+                if len(self.expr[0]) != 1:
+                    return self.expr[0]  # -->[[result]]
+                return [x[0] for x in self.TT.table]  # -> single variable
+            elif len(self.expr) in [2, 3]:
                 return xS.solve(AtomicExpression(self.expr))
-            elif not self.expr.__contains__('('):
-                self.solve_all_NOT(xS)
-                highest_priority_operator_idx = self.get_highest_priority_operator_idx(self.get_operators())
-                highest_priority_expression = [self.expr.pop(i) for i in [highest_priority_operator_idx - 1] * 3]
-                result = xS.solve(AtomicExpression(highest_priority_expression))
-                self.expr.insert(highest_priority_operator_idx - 1, result)
             else:
                 def solve_inner_expr(expr):
-                    xTree = ExpressionTree(expr, self.TT, is_root=False)
-                    return xTree.solve()
+                    xNode = ExpressionSolver(expr, self.TT, is_root=False)
+                    return xNode.solve()
 
-                bracket_idxs = get_bracket_idxs(self.expr)
                 inner_expr_start_indx, inner_expr_end_idx = get_inner_expr_idx(self.expr)
-                inner_expr = self.expr[inner_expr_start_indx + 1: inner_expr_end_idx]
-                solved_inner_expr = solve_inner_expr(inner_expr)
-                self.expr = self.expr[:inner_expr_start_indx] + self.expr[inner_expr_end_idx+1:]
-                self.expr.insert(bracket_idxs[0], solved_inner_expr)
+                inner_expr = get_inner_expr(self.expr, inner_expr_start_indx, inner_expr_end_idx)
+                self.expr = self.expr[:inner_expr_start_indx] + self.expr[inner_expr_end_idx + 1:]
+                self.expr.insert(inner_expr_start_indx, solve_inner_expr(inner_expr))
 
-    def translate_operators(self):
-        """
-        turns user input operators into keys of OPERATORS / their function names
-        """
-        translated_expr = []
-        for i in range(len(self.expr)):
-            for key in OPERATORS.keys():
-                if self.expr[i] in OPERATORS[key]:
-                    translated_expr.append(key)
-                    break
-            if len(translated_expr) != i + 1:
-                if self.var_is_valid(self.expr[i]):
-                    translated_expr.append(self.expr[i])
-        return translated_expr
 
-    @staticmethod
-    def var_is_valid(var):
-        if len(var) == 1:
-            return True
-        else:
-            raise InvalidExpressionException(f"Invalid variable {var}")
+def translate_operators(expr):
+    """
+    turns user input operators into keys of OPERATORS / the function names
+    """
+    translated_expr = []
+    for i in range(len(expr)):
+        for key in OPERATORS.keys():
+            if expr[i] in OPERATORS[key]:
+                translated_expr.append(key)
+                break
+        if len(translated_expr) != i + 1:
+            # todo should be handled before?. Removing it breaks everything doe. So dont.
+            if var_is_valid(expr[i]):
+                translated_expr.append(expr[i])
+    return translated_expr
 
-    def remove_redundant_parentheses_from_single_var(self):
-        if len(self.expr) == 3 and len(self.expr[1]) == 1:
-            self.expr.pop(0)
-            self.expr.pop(1)
-            return True
 
-    def solve_all_NOT(self, expressionSolver: AtomicExpressionSolver):
-        i = 0
-        while i < len(self.expr):
-            if self.expr[i] == 'NOT':
-                self.expr.insert(i, expressionSolver.solve(AtomicExpression([self.expr.pop(idx) for idx in [i, i]])))
-                i += 1
+def remove_all_double_negations(expr):
+    i = 0
+    while i + 1 < len(expr):
+        if expr[i] == 'NOT' == expr[i + 1]:
+            expr.pop(i)
+            expr.pop(i)
             i += 1
+        i += 1
 
-    def get_operators(self):
-        return [x for x in self.expr if x in list(OPERATORS.keys())]
 
-    def get_highest_priority_operator_idx(self, operators):
-        first_operator = list(OPERATORS.keys())[
-            min([list(OPERATORS.keys()).index(op) for op in operators])
-        ]
-        return self.expr.index(first_operator)
-
-    def remove_double_negations(self):
-        i = 0
-        while i+1 < len(self.expr):
-            if self.expr[i] == 'NOT' == self.expr[i+1]:
-                self.expr.pop(i)
-                self.expr.pop(i)
-                i += 1
-            i += 1
+def var_is_valid(var):
+    if len(var) == 1:
+        return True
+    else:
+        raise InvalidExpressionException(f"Invalid variable {var}")
 
 
 def get_bracket_idxs(expr):
     return [i for i in range(len(expr)) if type(expr[i]) == str and expr[i] in '()']
+
+
+def get_inner_expr(expr, start, stop):
+    return expr[start + 1: stop]
 
 
 def get_inner_expr_idx(expr):
@@ -230,6 +207,115 @@ def get_inner_expr_idx(expr):
                 return inner_expr_start_idx, inner_expr_end_idx
 
 
-class InvalidExpressionException(Exception):
-    def __init__(self, msg):
-        super(InvalidExpressionException, self).__init__(f'Invalid expression: {msg}')
+class Node:
+    def __init__(self, expr):
+        self.left = None
+        self.right = None
+        self.var_ = None
+        self.operator_idx = None
+        self.operator = None
+        self.add_children(expr)
+
+    def add_children(self, expr: list):
+        no_brackets = list(filter(lambda x: x not in "()", expr))
+        if len(no_brackets) == 1:
+            self.var_ = no_brackets[0]
+            return
+        elif len(no_brackets) == 0:
+            del self
+            return
+        expr = remove_redundant_outside_brackets(expr)
+        self.operator_idx = get_last_operator(expr)
+        self.operator = expr[self.operator_idx]
+        if expr[:self.operator_idx]:
+            self.left = Node(expr[:self.operator_idx])
+        if expr[self.operator_idx + 1:]:
+            self.right = Node(expr[self.operator_idx + 1:])
+
+    def get_expression(self):
+        expr = ''
+        if self.is_not_None(self.left):
+            expr += '('
+            expr += self.left.get_expression()
+        if self.operator_idx is not None:
+            if self.operator == 'NOT':
+                expr += '('
+            expr += f" {self.operator} "
+        if self.is_not_None(self.right):
+            expr += self.right.get_expression()
+            expr += ')'
+        if self.var_:
+            expr += f"{self.var_}"
+        return expr
+
+    @staticmethod
+    def is_not_None(node):
+        return node and (node.operator or node.var_)
+
+    def print(self):
+        # just for showing the structure of the tree. Can be impr(remo)oved.
+        if self.operator_idx is not None:
+            print(self.operator)
+        if self.left:
+            print('RIGHT:')
+            self.left.print()
+        if self.right:
+            print('LEFT:')
+            self.right.print()
+        if self.var_:
+            print(self.var_)
+
+
+def remove_redundant_outside_brackets(expr):
+    # sometimes all it takes is to change an if to a while (inspirational)
+    while expr.__contains__('(') and len(get_expression_levels(expr)) == 1:
+        # ((A AND B)) => A AND B
+        expr = remove_outer_brackets(expr)
+    return expr
+
+
+def remove_outer_brackets(expr):
+    return expr[1: len(expr) - 1]
+
+
+def get_last_operator(expr):
+    expr_levels = get_expression_levels(expr)
+    lowest_level_idx = expr_levels[min(expr_levels.keys())]
+    lowest_level = [expr[i] for i in lowest_level_idx]
+    first_operator = OPERATOR_KEYS[
+        max([OPERATOR_KEYS.index(op) for op in get_operators(lowest_level)])
+    ]
+    return expr.index(first_operator)
+
+
+def get_operators(expr):
+    return [x for x in expr if x in OPERATOR_KEYS]
+
+
+def get_expression_levels(expr):
+    """
+    :returns: dictionary with the level of depth of each part of the expression. Brackets are ignored in the result.
+    e.g.: ['A', 'OR', 'B', 'AND', '(', 'A', 'IF', '(', 'NOT', 'C', 'IF', 'D', ')', ')']
+    => {0: [0, 1, 2, 3], 1: [5, 6], 2: [8, 9, 10, 11]}
+    """
+    level = 0
+    levels = dict()
+    for i in range(len(expr)):
+        if expr[i] == '(':
+            level += 1
+        elif expr[i] == ')':
+            level -= 1
+        else:
+            levels.setdefault(level, []).append(i)
+    return levels
+
+
+def main():
+    in_ = input('Expression: ')
+    xTree = ExpressionSolver(in_, is_root=True)
+    print(in_)
+    print(xTree.solve())
+
+
+if __name__ == '__main__':
+    main()

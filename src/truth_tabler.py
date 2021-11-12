@@ -1,17 +1,16 @@
 from copy import deepcopy
 
 from prettytable import PrettyTable
-from src.truth_table import prepare
-from src.bool_expressions import TruthTable, ExpressionTree
-from src.normal_forms import CCNF, CDNF, _CONJUNCTION, _DISJUNCTION
-from src.optimization import QuineMcCluskey
+from bool_expressions import TruthTable, ExpressionSolver
+from normal_forms import CCNF, CDNF, _CONJUNCTION, _DISJUNCTION
+from optimization import QuineMcCluskey
 
 
 class TruthTabler:
     def __init__(self, expr: str = None):
         self.TT = None
-        self.OGexpr = ''
-        self.expr = []
+        self.expr = ''
+        self.expr = ''
         self.xTree = None
         self.result = []
         self.CDNF = None
@@ -22,20 +21,16 @@ class TruthTabler:
 
     def evaluate(self, expr):
         self.__init__()
-        self.check_validness(expr)
         self.TT = TruthTable(expr)
-        self.OGexpr = expr
-        self.expr = prepare(expr)
-        self.xTree = ExpressionTree(self.expr, self.TT, is_root=True)
+        self.expr = expr
+        self.xTree = ExpressionSolver(expr, self.TT, is_root=True)
+        print('Solving expression...')
         self.result = self.xTree.solve()
+        print('Creating normal forms...')
         self.CDNF = CDNF(self.TT, self.result)
         self.CCNF = CCNF(self.TT, self.result)
-        self.minimal_expr = QuineMcCluskey(self.result).minimal_expr
-
-    @staticmethod
-    def check_validness(expr):
-        if expr.count('(') != expr.count(')'):
-            raise BracketException(expr, [expr.count('('), expr.count(')')])
+        print('Minimizing...')
+        self.minimal_expr = QuineMcCluskey(self.result, self.TT.variables).minimal_expr
 
     def print(self):
         prettyTable = PrettyTable()
@@ -51,19 +46,14 @@ class TruthTabler:
         prettyTable.add_rows(rows)
         print(prettyTable, f'\n Normal Forms: ({_CONJUNCTION} = AND; {_DISJUNCTION} = OR)'
                            f'\n   CDNF:\n \t{self.CDNF}'
-                           f'\n   CCNF:\n \t{self.CCNF}'
-                           f'\n   Minimal expression:\n \t{self.minimal_expr}'
+                           f'\n   CCNF:\n \t{self.CCNF}\n'
+                           f'\n Minimal expression:'
+                           f'\n    \t{self.minimal_expr}'
                            f'\n {self.result}')
 
     def _get_formated_OGexpr(self):
-        # prevents non unique field names for prettytable
-        OG = self.OGexpr
-        if len(self.OGexpr) == 1:
-            OG = '(' + self.OGexpr + ')'
-        return OG
-
-
-class BracketException(Exception):
-    def __init__(self, expr, msg):
-        super(Exception, self).__init__(f'Number of opening and closing brackets do not match: {msg[0]} != {msg[1]} '
-                                        f'for: "{expr}"')
+        # prevents non unique field names for prettytable (if an expression is a single variable)
+        expr = self.expr
+        if len(self.expr) == 1:
+            expr = '(' + self.expr + ')'
+        return expr

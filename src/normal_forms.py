@@ -1,4 +1,4 @@
-from src.truth_table import TruthTable
+from truth_table import TruthTable
 
 _CONJUNCTION = '·'
 _DISJUNCTION = '+'
