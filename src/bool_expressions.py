@@ -1,4 +1,4 @@
-from Exceptions import InvalidExpressionException
+from exceptions import InvalidExpressionException
 from truth_table import TruthTable, prepare
 
 
@@ -50,7 +50,7 @@ OPERATOR_KEYS = list(OPERATORS.keys())
 
 class AtomicExpression:
     """
-    takes an Expression of the form "['var1', '(_OPERATOR)', 'var2']" or "['NOT',  'var1']" and figures out
+    takes an Expression of the form "['var1', 'OPERATOR', 'var2']" or "['NOT',  'var1']" and figures out
     the operators and variables
     """
 
@@ -66,12 +66,12 @@ class AtomicExpression:
                 return globals()[expression.pop(1)], expression
             except KeyError:
                 pass
-        raise InvalidExpressionException("Invalid operator_idx. Or redundant parentheses around single variable.")
+        raise InvalidExpressionException("Invalid operator.")
 
 
 class AtomicExpressionSolver:
     """
-    takes an atomicExpression to evalutate it + x TruthTable to look up values of variable names
+    takes an AtomicExpression to evalutate it + a TruthTable to look up values of variable names
     """
 
     def __init__(self, truthTable: TruthTable, atomic_expr: AtomicExpression = None):
@@ -105,7 +105,7 @@ class AtomicExpressionSolver:
                     try:
                         values.append([row[self.TT.variables.index(var)] for row in self.TT.table])
                     except ValueError:
-                        raise InvalidExpressionException(f'Invalid Operator: {var} (Must be a single letter!)')
+                        raise InvalidExpressionException(f'Invalid variable: {var} (Must be a single letter!)')
             else:
                 values.append(var)
         return values
@@ -158,9 +158,7 @@ def translate_operators(expr):
                 translated_expr.append(key)
                 break
         if len(translated_expr) != i + 1:
-            # todo should be handled before?. Removing it breaks everything doe. So dont.
-            if var_is_valid(expr[i]):
-                translated_expr.append(expr[i])
+            translated_expr.append(expr[i])
     return translated_expr
 
 
@@ -172,17 +170,6 @@ def remove_all_double_negations(expr):
             expr.pop(i)
             i += 1
         i += 1
-
-
-def var_is_valid(var):
-    if len(var) == 1:
-        return True
-    else:
-        raise InvalidExpressionException(f"Invalid variable {var}")
-
-
-def get_bracket_idxs(expr):
-    return [i for i in range(len(expr)) if type(expr[i]) == str and expr[i] in '()']
 
 
 def get_inner_expr(expr, start, stop):
@@ -205,6 +192,10 @@ def get_inner_expr_idx(expr):
                 inner_expr_start_idx = bracket_idxs[0]
                 inner_expr_end_idx = bracket_idxs[(open_brackets + closed_brackets) - 1]
                 return inner_expr_start_idx, inner_expr_end_idx
+
+
+def get_bracket_idxs(expr):
+    return [i for i in range(len(expr)) if type(expr[i]) == str and expr[i] in '()']
 
 
 class Node:
@@ -282,14 +273,14 @@ def get_last_operator(expr):
     expr_levels = get_expression_levels(expr)
     lowest_level_idx = expr_levels[min(expr_levels.keys())]
     lowest_level = [expr[i] for i in lowest_level_idx]
-    first_operator = OPERATOR_KEYS[
-        max([OPERATOR_KEYS.index(op) for op in get_operators(lowest_level)])
-    ]
-    return expr.index(first_operator)
-
-
-def get_operators(expr):
-    return [x for x in expr if x in OPERATOR_KEYS]
+    try:
+        last_operator = OPERATOR_KEYS[
+            max([OPERATOR_KEYS.index(op) for op in get_operators(lowest_level)])
+        ]
+    except ValueError:
+        raise InvalidExpressionException("Invalid operator.")
+    first_operator_idx = lowest_level_idx[lowest_level.index(last_operator)]
+    return first_operator_idx
 
 
 def get_expression_levels(expr):
@@ -308,6 +299,10 @@ def get_expression_levels(expr):
         else:
             levels.setdefault(level, []).append(i)
     return levels
+
+
+def get_operators(expr):
+    return [x for x in expr if x in OPERATOR_KEYS]
 
 
 def main():

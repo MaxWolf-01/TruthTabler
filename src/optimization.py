@@ -1,19 +1,23 @@
 import math
 import string
 from copy import deepcopy
+import json
 
-from src.normal_forms import _CONJUNCTION, _DISJUNCTION, _NOT
-from src.truth_table import createTT
+from normal_forms import _CONJUNCTION, _DISJUNCTION, _NOT
+from truth_table import createTT
+
+import cProfile
+import pstats
 
 
-# todo Dont care's (just omit the terms in the pi_table)
+# todo Dont cares (just omit the terms in the pi_table but use them for min term creation i think)
 
 def factor_expression():
     pass  # todo
 
 
 class QuineMcCluskey:
-    def __init__(self, truth_table_result=None):
+    def __init__(self, truth_table_result=None, variable_names=None):
         self.TT = []
         self.minterms = []
         self.minterm_groups = {}
@@ -21,9 +25,9 @@ class QuineMcCluskey:
         self.essential_prime_implicants = set()
         self.minimal_expr = ''
         if truth_table_result:
-            self.minimize(truth_table_result)
+            self.minimize(truth_table_result, variable_names)
 
-    def minimize(self, result):
+    def minimize(self, result, variable_names=None):
         if len(result) % 2:
             raise Exception(f'Invalid result length {len(result)}. Not a power of 2.')
         self.__init__()
@@ -36,7 +40,7 @@ class QuineMcCluskey:
         self._group_minterms()
         self._merge_all_groups()
         self._solve_prime_implicant_table()
-        self._set_minimal_expr()
+        self._set_minimal_expr(variable_names)
         return self.minimal_expr
 
     @staticmethod
@@ -103,6 +107,7 @@ class QuineMcCluskey:
         :returns: The minterms involved in the merge and the merged minterm || False if more than one bit difference
         e.g: ((0,), (0,0,0)), ((1,), (0,0,1)) => ((0, 1), (0,0,'_'))
         """
+        # def get_dif_bit_idx(m1, m2)
         different_bits_idxs = [i for i in range(len(m1[1])) if m1[1][i] != m2[1][i]]
         if len(different_bits_idxs) > 1:
             return False
@@ -117,7 +122,7 @@ class QuineMcCluskey:
                 self.prime_implicants.add(minterm)
 
     def _solve_prime_implicant_table(self):
-        self.prime_implicants = self._remove_duplicate_implicants(self.prime_implicants)
+        self.prime_implicants = self._remove_duplicate_implicants(self.prime_implicants)  # todo filter beforehand?
         pi_table = self.create_prime_implicant_table(self.prime_implicants)
         while pi_table:
             initial_table = deepcopy(pi_table)
@@ -255,8 +260,10 @@ class QuineMcCluskey:
                         dominating_cols.add(mint1)
         return dominating_cols
 
-    def _set_minimal_expr(self):
-        vars_ = string.ascii_uppercase
+    def _set_minimal_expr(self, variable_names=None):
+        vars_ = variable_names
+        if not variable_names:
+            vars_ = string.ascii_uppercase
         for epi in self.essential_prime_implicants:
             if self.minimal_expr:
                 self.minimal_expr += _DISJUNCTION
@@ -274,6 +281,44 @@ class QuineMcCluskey:
             self.minimal_expr += ')'
 
 
-# Q = QuineMcCluskey()
-# print(Q.minimize([1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0]))  # cyclic
-# print(TruthTabler(Q.minimal_expr).result == [1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0])
+def test_QMC():
+    QMC = QuineMcCluskey()
+    QMC.minimize(
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0,
+         0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1,
+         1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0]
+    )
+    print(QMC.minimal_expr)
+
+
+def test():
+    with cProfile.Profile() as pr:
+        test_QMC()
+
+    stats = pstats.Stats(pr)
+    stats.sort_stats(pstats.SortKey.TIME)
+    stats.print_stats()
+
+
+# if __name__ == '__main__':
+#     test()
+
+if __name__ == '__main__':
+    Q = QuineMcCluskey()
+    while True:
+        print("Enter digit one by one? [y/n]")
+        if input() == 'y':
+            length = int(input("Table length: "))
+            TTvalues = []
+            for index in range(length):
+                TTvalues.append(int(input(f'{index}: ')))
+            Q.minimize(TTvalues)
+        else:
+            Q.minimize(json.loads(input('Truthtable list: ')))
+        print(Q.minimal_expr)
+
+
+    # Q = QuineMcCluskey()
+    # print(Q.minimize([1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0]))  # cyclic
+    # print(TruthTabler(Q.minimal_expr).result == [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0])
