@@ -2,8 +2,8 @@ import cProfile
 import pstats
 
 from truth_tabler import TruthTabler
-from bool_expressions import OPERATORS, InvalidExpressionException
-from truth_table import BracketException
+from bool_expressions import OPERATORS
+from exceptions import BracketException, InvalidExpressionException
 
 if __name__ == '__main__':
 

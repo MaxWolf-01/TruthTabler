@@ -1,0 +1,7 @@
+AND_SIGN = " & "
+OR_SIGN = "=>1"
+
+LINE_JOIN = "+"
+LINE_VERTICAL = "|"
+LINE_HORIZONTAL = "-"
+LINE_CORNER = "·"

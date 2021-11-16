@@ -1,7 +1,7 @@
 import itertools
 import re
 from prettytable import PrettyTable
-from Exceptions import BracketException, InvalidExpressionException
+from exceptions import BracketException, InvalidExpressionException
 
 
 def getVariables(expr: list):
