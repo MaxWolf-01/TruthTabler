@@ -29,7 +29,7 @@ def build_box(space, x, y, sign, is_negated0, is_negated1):
             space[x_ + counter][y_] = j
             counter += 1
 
-    struct = ("|---|", f"|{sign}|-" + LINE_CORNER, "|---|")
+    struct = ("|---|", f"|{sign[0]}|" + ("o" if sign[1] else "-") + LINE_CORNER, "|---|")
     offset = 0
     for i in struct:
         write_blueprint(x, y + offset, i)
@@ -208,6 +208,6 @@ def create_circuit(tree, variables):
 # create_circuit((((("NOT", "B"), "AND", ("B", )), "AND", "B"), "AND", ("NOT", (("B", ), "AND", ("B", )))), ["B"])
 c = create_circuit(((("NOT", "R"), "AND", (("NOT", "S"), "OR", ("Q", ))),
                    "OR",
-                    (("R", ), "AND", ((("P", ), "AND", ("S", )), "OR", (("NOT", "P"), "AND", ("NOT", "Q"))))),
+                    (("R", ), "AND", ((("P", ), "NAND", ("S", )), "OR", (("NOT", "P"), "AND", ("NOT", "Q"))))),
                    ["P", "Q", "R", "S"])
 print_space(c, ["P", "Q", "R", "S"])
