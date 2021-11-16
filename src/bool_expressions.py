@@ -1,4 +1,4 @@
-from exceptions import InvalidExpressionException
+from Exceptions import InvalidExpressionException
 from truth_table import TruthTable, prepare
 
 
@@ -45,8 +45,6 @@ OPERATORS = {
     'EQ': ('EQ', "==", "<->", 'EQUALS')
 }
 
-OPERATOR_KEYS = list(OPERATORS.keys())
-
 
 class AtomicExpression:
     """
@@ -85,18 +83,18 @@ class AtomicExpressionSolver:
         values = self.getValues()
         if len(values) == 2:
             val1, val2 = values
-            for i in range(len(val1)):
-                result.append(f(val1[i], val2[i]))
+            for p, q in zip(val1, val2):
+                result.append(f(p, q))
         else:
             val1 = values[0]
-            for val in val1:
-                result.append(f(val))
+            for p in val1:
+                result.append(f(p))
         return result
 
     def getValues(self):
         values = []
         for var in self.expr.variables:
-            if type(var) is not list:
+            if not isinstance(var, list):
                 if var == '1':
                     values.append([1] * len(self.TT.table))
                 elif var == '0':
@@ -152,13 +150,13 @@ def translate_operators(expr):
     turns user input operators into keys of OPERATORS / the function names
     """
     translated_expr = []
-    for i in range(len(expr)):
-        for key in OPERATORS.keys():
-            if expr[i] in OPERATORS[key]:
+    for i, x in enumerate(expr):
+        for key in OPERATORS:
+            if x in OPERATORS[key]:
                 translated_expr.append(key)
                 break
         if len(translated_expr) != i + 1:
-            translated_expr.append(expr[i])
+            translated_expr.append(x)
     return translated_expr
 
 
@@ -195,7 +193,7 @@ def get_inner_expr_idx(expr):
 
 
 def get_bracket_idxs(expr):
-    return [i for i in range(len(expr)) if type(expr[i]) == str and expr[i] in '()']
+    return [i for i, x in enumerate(expr) if isinstance(x, str) and x in '()']
 
 
 class Node:
@@ -215,7 +213,7 @@ class Node:
         elif len(no_brackets) == 0:
             del self
             return
-        expr = remove_redundant_outside_brackets(expr)
+        expr = remove_redundant_brackets(expr)
         self.operator_idx = get_last_operator(expr)
         self.operator = expr[self.operator_idx]
         if expr[:self.operator_idx]:
@@ -257,8 +255,14 @@ class Node:
             print(self.var_)
 
 
-def remove_redundant_outside_brackets(expr):
-    # sometimes all it takes is to change an if to a while (inspirational)
+def remove_redundant_brackets(expr):
+    if expr.count('(') != expr.count(')'):
+        # ((NOT A OR B) => NOT A OR B  (can happen in parsing process)
+        return list(filter(lambda x: x not in "()", expr))
+    return remove_redundant_outer_brackets(expr)
+
+
+def remove_redundant_outer_brackets(expr):
     while expr.__contains__('(') and len(get_expression_levels(expr)) == 1:
         # ((A AND B)) => A AND B
         expr = remove_outer_brackets(expr)
@@ -271,16 +275,17 @@ def remove_outer_brackets(expr):
 
 def get_last_operator(expr):
     expr_levels = get_expression_levels(expr)
-    lowest_level_idx = expr_levels[min(expr_levels.keys())]
+    lowest_level_idx = expr_levels[min(expr_levels)]
     lowest_level = [expr[i] for i in lowest_level_idx]
+    operator_keys = list(OPERATORS)
     try:
-        last_operator = OPERATOR_KEYS[
-            max([OPERATOR_KEYS.index(op) for op in get_operators(lowest_level)])
+        last_operator = operator_keys[
+            max([operator_keys.index(op) for op in get_operators(lowest_level)])
         ]
     except ValueError:
         raise InvalidExpressionException("Invalid operator.")
-    first_operator_idx = lowest_level_idx[lowest_level.index(last_operator)]
-    return first_operator_idx
+    last_operator_idx = lowest_level_idx[lowest_level.index(last_operator)]
+    return last_operator_idx
 
 
 def get_expression_levels(expr):
@@ -291,10 +296,10 @@ def get_expression_levels(expr):
     """
     level = 0
     levels = dict()
-    for i in range(len(expr)):
-        if expr[i] == '(':
+    for i, x in enumerate(expr):
+        if x == '(':
             level += 1
-        elif expr[i] == ')':
+        elif x == ')':
             level -= 1
         else:
             levels.setdefault(level, []).append(i)
@@ -302,7 +307,7 @@ def get_expression_levels(expr):
 
 
 def get_operators(expr):
-    return [x for x in expr if x in OPERATOR_KEYS]
+    return [x for x in expr if x in OPERATORS]
 
 
 def main():
