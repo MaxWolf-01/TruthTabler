@@ -10,7 +10,7 @@ import cProfile
 import pstats
 
 
-# todo Dont care's (just omit the terms in the pi_table but use them for min term creation it)
+# todo Dont cares (just omit the terms in the pi_table but use them for min term creation i think)
 
 def factor_expression():
     pass  # todo
@@ -319,6 +319,6 @@ if __name__ == '__main__':
         print(Q.minimal_expr)
 
 
-# Q = QuineMcCluskey()
-# print(Q.minimize([1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0]))  # cyclic
-# print(TruthTabler(Q.minimal_expr).result == [1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0])
+    # Q = QuineMcCluskey()
+    # print(Q.minimize([1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0]))  # cyclic
+    # print(TruthTabler(Q.minimal_expr).result == [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0])

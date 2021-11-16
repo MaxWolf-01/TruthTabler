@@ -4,9 +4,12 @@ from prettytable import PrettyTable
 from exceptions import BracketException, InvalidExpressionException
 
 
-def getVariables(expr: list):
+def setVariables(expr: list):
     # Variables have to be a letter and of length 1
-    return sorted({x for x in expr if x.isalpha() and len(x) == 1})
+    vars_ = sorted({x for x in expr if x.isalpha() and len(x) == 1})
+    if not vars_:
+        raise InvalidExpressionException('Expression has no valid variable(s)! (Must be single letters)')
+    return vars_
 
 
 def createTT(n):
@@ -14,6 +17,7 @@ def createTT(n):
 
 
 def reverse_table(table):
+    # regular table is from all 0s to all 1s.
     return table[::-1]
 
 
@@ -24,17 +28,15 @@ def prepare(expr):
     return [e for e in re.split('([(| |)|!|¬|·|+|-])', expr.upper()) if e != " " and e != ""]
 
 
-def check_validness(expr):
+def check_brackets(expr):
     if expr.count('(') != expr.count(')'):
         raise BracketException(expr, [expr.count('('), expr.count(')')])
 
 
 class TruthTable:
     def __init__(self, expr: str, reversed_table=False):
-        check_validness(expr)
-        self.variables = getVariables(prepare(expr))
-        if not self.variables:
-            raise InvalidExpressionException('Expression has no valid variable(s) (Must be single letters)')
+        check_brackets(expr)
+        self.variables = setVariables(prepare(expr))
         self.table = createTT(len(self.variables))
         if reversed_table:
             self.table = reverse_table(self.table)
@@ -48,7 +50,7 @@ def main():
         vars_.append(input(f"Variable {i}: "))
     field_names = ['#', *vars_]
     TT = createTT(in_)
-    if input('Reverse Table (from all 1s to all 0s) [y/n]? :') == 'y':
+    if input('Reverse Table (=>from all 1s to all 0s) [y/n]? :') == 'y':
         TT.reverse()
     rows = [[i, ] for i in range(len(TT))]
     for i in range(len(rows)):

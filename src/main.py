@@ -1,5 +1,5 @@
-import cProfile
-import pstats
+# import cProfile
+# import pstats
 
 from truth_tabler import TruthTabler
 from bool_expressions import OPERATORS
@@ -21,12 +21,12 @@ if __name__ == '__main__':
             info()
         else:
             try:
-                with cProfile.Profile() as pr:
-                    truthTabler = TruthTabler(user_in)
+                # with cProfile.Profile() as pr:
+                truthTabler = TruthTabler(user_in)
 
-                stats = pstats.Stats(pr)
-                stats.sort_stats(pstats.SortKey.TIME)
-                stats.print_stats()
+                # stats = pstats.Stats(pr)
+                # stats.sort_stats(pstats.SortKey.TIME)
+                # stats.print_stats()
 
                 truthTabler.print()
             except (BracketException, InvalidExpressionException) as e:

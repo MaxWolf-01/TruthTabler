@@ -50,7 +50,7 @@ OPERATOR_KEYS = list(OPERATORS.keys())
 
 class AtomicExpression:
     """
-    takes an Expression of the form "['var1', '(_OPERATOR)', 'var2']" or "['NOT',  'var1']" and figures out
+    takes an Expression of the form "['var1', 'OPERATOR', 'var2']" or "['NOT',  'var1']" and figures out
     the operators and variables
     """
 
@@ -105,7 +105,7 @@ class AtomicExpressionSolver:
                     try:
                         values.append([row[self.TT.variables.index(var)] for row in self.TT.table])
                     except ValueError:
-                        raise InvalidExpressionException(f'Invalid Operator: {var} (Must be a single letter!)')
+                        raise InvalidExpressionException(f'Invalid variable: {var} (Must be a single letter!)')
             else:
                 values.append(var)
         return values
@@ -273,10 +273,14 @@ def get_last_operator(expr):
     expr_levels = get_expression_levels(expr)
     lowest_level_idx = expr_levels[min(expr_levels.keys())]
     lowest_level = [expr[i] for i in lowest_level_idx]
-    first_operator = OPERATOR_KEYS[
-        max([OPERATOR_KEYS.index(op) for op in get_operators(lowest_level)])
-    ]
-    return expr.index(first_operator)
+    try:
+        last_operator = OPERATOR_KEYS[
+            max([OPERATOR_KEYS.index(op) for op in get_operators(lowest_level)])
+        ]
+    except ValueError:
+        raise InvalidExpressionException("Invalid operator.")
+    first_operator_idx = lowest_level_idx[lowest_level.index(last_operator)]
+    return first_operator_idx
 
 
 def get_expression_levels(expr):
