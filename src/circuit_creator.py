@@ -1,10 +1,8 @@
-import random
-
 from circuit_creator_helper_methods import *
 from circuit_creator_static_variables import *
 from truth_table import prepare, getVariables
 from bool_expressions import Node, translate_operators
-import time
+
 
 LINE_WIDTH = 0
 
@@ -30,7 +28,7 @@ def build_box(space, x, y, sign, is_negated0, is_negated1):
             space[x_ + counter][y_] = j
             counter += 1
 
-    struct = ("|---|", f"|{sign}|-" + LINE_CORNER, "|---|")
+    struct = ("|###|", f"|{sign[0]}|" + ("o" if sign[1] else "-") + LINE_CORNER, "|###|")
     offset = 0
     for i in struct:
         write_blueprint(x, y + offset, i)
@@ -40,15 +38,7 @@ def build_box(space, x, y, sign, is_negated0, is_negated1):
     space[x - 1][y + 2] = "o" if is_negated1 else "-"
 
 
-def print_space(space, variables=None):
-    if variables is None:
-        variables = []
-
-    # for dramatic effect baby YES
-    def sleep():
-        time.sleep(random.random() * 0.3 + 0.1)
-
-    sleep()
+def print_space(space, variables):
     print(" ".join(variables))
 
     height = len(space[0])
@@ -58,7 +48,6 @@ def print_space(space, variables=None):
         for x in range(len(space)):
             cache += space[x][y]
 
-        sleep()
         print(cache)
 
 
@@ -125,7 +114,7 @@ def fill_circuit(tree, variables):
         upper_space = build_lines(4, var_count)
         extend_space(upper_space, 8 * (level + 1), 4)
 
-        build_box(upper_space, LINE_WIDTH + 8 * level, 1, globals()[f"{operator}_SIGN"],
+        build_box(upper_space, LINE_WIDTH + 8 * level, 1,  globals()[f"{operator}_SIGN"],
                   is_negated(tree[0]), is_negated(tree[2]))
 
         draw_horizontal_connected_line(upper_space, idx_var0 * 2, 1, LINE_WIDTH + 8 * level - idx_var0 * 2 - 1)
@@ -198,7 +187,7 @@ def fill_circuit(tree, variables):
 
 def create_circuit(tree, variables):
     global LINE_WIDTH
-    LINE_WIDTH = len(variables) * 2 + 2
+    LINE_WIDTH = len(variables) * 2 + 3
     return fill_circuit(tree, variables)[0]
 
 
@@ -207,3 +196,20 @@ def create_circuit_from_string(expr):
     vars_ = getVariables(expr)
     return create_circuit(tree, vars_)
 
+
+# create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"])
+# c = create_circuit((("NOT", "A"), "AND", (("A", ), "AND", ("NOT", "B"))), ["A", "B"])
+# print_space(c, [])
+# create_circuit((("A",), "AND", (("NOT", "A"), "AND", (("A",), "AND", ("NOT", "B")))), ["A", "B"])
+# create_circuit((("NOT", "A"), "AND", ((("NOT", "B"), "AND", ("NOT", "A")), "AND", ("NOT", "B"))), ["A", "B"])
+# create_circuit((((("NOT", "B"), "AND", ("B", )), "AND", "B"), "AND", ("NOT", (("B", ), "AND", ("B", )))), ["B"])
+# c = create_circuit(((("NOT", "R"), "AND", (("NOT", "S"), "OR", ("Q", ))),
+#                   "OR",
+#                    (("R", ), "AND", ((("P", ), "NAND", ("S", )), "OR", (("NOT", "P"), "AND", ("NOT", "Q"))))),
+#                   ["P", "Q", "R", "S"])
+# print_space(c, ["P", "Q", "R", "S"])
+# input()
+
+# print_space(create_circuit([[['A'], 'AND', ['B']], 'OR', [['NOT', 'A'], 'AND', ['NOT', 'B']]], ["A", "B"]), ["A", "B"])
+
+# print_space(create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"]), ["A", "B"])
