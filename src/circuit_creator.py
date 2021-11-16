@@ -39,15 +39,7 @@ def build_box(space, x, y, sign, is_negated0, is_negated1):
     space[x - 1][y + 2] = "o" if is_negated1 else "-"
 
 
-def print_space(space, variables=None):
-    if variables is None:
-        variables = []
-
-    # for dramatic effect baby YES
-    def sleep():
-        time.sleep(random.random() * 0.3 + 0.1)
-
-    sleep()
+def print_space(space, variables):
     print(" ".join(variables))
 
     height = len(space[0])
@@ -57,7 +49,6 @@ def print_space(space, variables=None):
         for x in range(len(space)):
             cache += space[x][y]
 
-        sleep()
         print(cache)
 
 
