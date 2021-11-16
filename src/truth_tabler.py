@@ -3,7 +3,8 @@ from copy import deepcopy
 from prettytable import PrettyTable
 
 from src import circuit_creator
-from bool_expressions import TruthTable, ExpressionSolver
+from src import truth_table
+from bool_expressions import ExpressionSolver
 from normal_forms import CCNF, CDNF, _CONJUNCTION, _DISJUNCTION
 from optimization import QuineMcCluskey
 
@@ -12,18 +13,19 @@ class TruthTabler:
     def __init__(self, expr: str = None):
         self.TT = None
         self.expr = ''
-        self.expr = ''
         self.xTree = None
         self.result = []
         self.CDNF = None
         self.CCNF = None
         self.minimal_expr = ''
+        self.circuit = None
+        self.variables = []
         if expr:
             self.evaluate(expr)
 
     def evaluate(self, expr):
         self.__init__()
-        self.TT = TruthTable(expr)
+        self.TT = truth_table.TruthTable(expr)
         self.expr = expr
         self.xTree = ExpressionSolver(expr, self.TT, is_root=True)
         print('Solving expression...')
@@ -33,6 +35,9 @@ class TruthTabler:
         self.CCNF = CCNF(self.TT, self.result)
         print('Minimizing...')
         self.minimal_expr = QuineMcCluskey(self.result, self.TT.variables).minimal_expr
+        print('Creating Circuit...')
+        self.circuit = circuit_creator.create_circuit_from_string(self.minimal_expr)
+        self.variables = truth_table.getVariables(self.minimal_expr)
 
     def print(self):
         prettyTable = PrettyTable()
@@ -52,8 +57,7 @@ class TruthTabler:
                            f'\n Minimal expression:'
                            f'\n    \t{self.minimal_expr}'
                            f'\n {self.result}')
-
-        circuit = circuit_creator.create_circuit([])
+        circuit_creator.print_space(self.circuit, self.variables)
 
     def _get_formated_OGexpr(self):
         # prevents non unique field names for prettytable (if an expression is a single variable)

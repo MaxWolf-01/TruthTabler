@@ -38,8 +38,8 @@ OPERATORS = {
     'NOT': ("NOT", "!", '¬', '-'),
     'AND': ("AND", "&&", '&', '·', '∧'),
     'OR': ("OR", "||", '+', '∨'),
-    'NAND': ('NAND',),
-    'NOR': ('NOR',),
+    'NAND': ('NAND', '↑'),
+    'NOR': ('NOR', '↓'),
     'XOR': ("XOR",),
     'IF': ("IF", "->", '=>', '>'),
     'EQ': ('EQ', "==", "<->", 'EQUALS')
@@ -117,10 +117,11 @@ class ExpressionSolver:
     """
     takes an expression parsed by the Node class and solves from most nested equation to the least.
     """
+
     def __init__(self, expr: str, truthTable: TruthTable = None, is_root: bool = False):
         self.TT = truthTable if truthTable else TruthTable(expr)
         if is_root:
-            self.expr = prepare(Node(translate_operators(prepare(expr))).get_expression())
+            self.expr = prepare(Node(expr).get_expression_as_string())
             remove_all_double_negations(expr)
         else:
             self.expr = expr
@@ -143,21 +144,6 @@ class ExpressionSolver:
                 inner_expr = get_inner_expr(self.expr, inner_expr_start_indx, inner_expr_end_idx)
                 self.expr = self.expr[:inner_expr_start_indx] + self.expr[inner_expr_end_idx + 1:]
                 self.expr.insert(inner_expr_start_indx, solve_inner_expr(inner_expr))
-
-
-def translate_operators(expr):
-    """
-    turns user input operators into keys of OPERATORS / the function names
-    """
-    translated_expr = []
-    for i, x in enumerate(expr):
-        for key in OPERATORS:
-            if x in OPERATORS[key]:
-                translated_expr.append(key)
-                break
-        if len(translated_expr) != i + 1:
-            translated_expr.append(x)
-    return translated_expr
 
 
 def remove_all_double_negations(expr):
@@ -203,7 +189,13 @@ class Node:
         self.var_ = None
         self.operator_idx = None
         self.operator = None
-        self.add_children(expr)
+        self.add_children(self.prepare_expr(expr))
+
+    @staticmethod
+    def prepare_expr(expr):
+        if isinstance(expr, str):
+            return translate_operators(prepare(expr))
+        return expr
 
     def add_children(self, expr: list):
         no_brackets = list(filter(lambda x: x not in "()", expr))
@@ -221,20 +213,35 @@ class Node:
         if expr[self.operator_idx + 1:]:
             self.right = Node(expr[self.operator_idx + 1:])
 
-    def get_expression(self):
+    def get_expression_as_string(self):
         expr = ''
         if self.is_not_None(self.left):
             expr += '('
-            expr += self.left.get_expression()
+            expr += self.left.get_expression_as_string()
         if self.operator_idx is not None:
             if self.operator == 'NOT':
                 expr += '('
             expr += f" {self.operator} "
         if self.is_not_None(self.right):
-            expr += self.right.get_expression()
+            expr += self.right.get_expression_as_string()
             expr += ')'
         if self.var_:
             expr += f"{self.var_}"
+        return expr
+
+    def get_expression_as_lists(self):
+        expr = []
+        if self.is_not_None(self.left):
+            expr.append(self.left.get_expression_as_lists())
+        if self.operator_idx is not None:
+            expr.append(f"{self.operator}")
+            if self.operator == 'NOT' and self.right.var_:
+                expr.extend(self.right.var_)
+                return expr
+        if self.is_not_None(self.right):
+            expr.append(self.right.get_expression_as_lists())
+        if self.var_:
+            expr.append(f"{self.var_}")
         return expr
 
     @staticmethod
@@ -253,6 +260,21 @@ class Node:
             self.right.print()
         if self.var_:
             print(self.var_)
+
+
+def translate_operators(expr):
+    """
+    turns user input operators into keys of OPERATORS / the function names
+    """
+    translated_expr = []
+    for i, x in enumerate(expr):
+        for key in OPERATORS:
+            if x in OPERATORS[key]:
+                translated_expr.append(key)
+                break
+        if len(translated_expr) != i + 1:
+            translated_expr.append(x)
+    return translated_expr
 
 
 def remove_redundant_brackets(expr):

@@ -1,10 +1,10 @@
 import itertools
 import re
 from prettytable import PrettyTable
-from exceptions import BracketException, InvalidExpressionException
+from Exceptions import BracketException, InvalidExpressionException
 
 
-def setVariables(expr: list):
+def getVariables(expr: list):
     # Variables have to be a letter and of length 1
     vars_ = sorted({x for x in expr if x.isalpha() and len(x) == 1})
     if not vars_:
@@ -25,7 +25,7 @@ def prepare(expr):
     """
     turns the expression into a list, using '( )!¬·+-' as delimiters. Case is ignored.
     """
-    return [e for e in re.split('([(| |)|!|¬|·|+|-])', expr.upper()) if e != " " and e != ""]
+    return [e for e in re.split('([(| |)|!|¬|·|+|-|↓|↑])', expr.upper()) if e != " " and e != ""]
 
 
 def check_brackets(expr):
@@ -36,7 +36,7 @@ def check_brackets(expr):
 class TruthTable:
     def __init__(self, expr: str, reversed_table=False):
         check_brackets(expr)
-        self.variables = setVariables(prepare(expr))
+        self.variables = getVariables(prepare(expr))
         self.table = createTT(len(self.variables))
         if reversed_table:
             self.table = reverse_table(self.table)

@@ -49,7 +49,7 @@ class QuineMcCluskey:
 
     @staticmethod
     def get_minterm_idxs(truth_table_result):
-        return tuple(i for i in range(len(truth_table_result)) if truth_table_result[i] == 1)
+        return tuple(i for i, x in enumerate(truth_table_result) if x == 1)
 
     def is_constant(self):
         if not self.minterms:
@@ -60,11 +60,10 @@ class QuineMcCluskey:
 
     def _group_minterms(self):
         # groups the minterms based on the number of ones
-        for i in range(len(self.minterms)):
-            minterm_index = self.minterms[i]
-            ith_minterm = self.TT[minterm_index]
+        for minterm in self.minterms:
+            ith_minterm = self.TT[minterm]
             minterm_group = ith_minterm.count(1)
-            self.minterm_groups.setdefault(minterm_group, []).append(((minterm_index,), ith_minterm))
+            self.minterm_groups.setdefault(minterm_group, []).append(((minterm,), ith_minterm))
 
     def _merge_all_groups(self):
         while True:
@@ -79,13 +78,10 @@ class QuineMcCluskey:
         merged_minterm_groups = {}
         ticked = set()
         for group_count in range(len(self.minterm_groups) - 1):
-            group = list(self.minterm_groups.keys())[group_count]
-            next_group = list(self.minterm_groups.keys())[group_count + 1]
-            for minterm_idx in range(len(self.minterm_groups[group])):
-                minterm = self.minterm_groups[group][minterm_idx]
-                for next_minterm_idx in range(len(self.minterm_groups[next_group])):
-                    next_minterm = self.minterm_groups[next_group][next_minterm_idx]
-
+            group = list(self.minterm_groups)[group_count]
+            next_group = list(self.minterm_groups)[group_count + 1]
+            for minterm in self.minterm_groups[group]:
+                for next_minterm in self.minterm_groups[next_group]:
                     merged_minterm = self._merge_minterms(minterm, next_minterm)
                     if merged_minterm:
                         merged_minterm_groups.setdefault(group, []).append(merged_minterm)
@@ -108,7 +104,7 @@ class QuineMcCluskey:
         e.g: ((0,), (0,0,0)), ((1,), (0,0,1)) => ((0, 1), (0,0,'_'))
         """
         # def get_dif_bit_idx(m1, m2)
-        different_bits_idxs = [i for i in range(len(m1[1])) if m1[1][i] != m2[1][i]]
+        different_bits_idxs = [i for i, _ in enumerate(m1[1]) if m1[1][i] != m2[1][i]]
         if len(different_bits_idxs) > 1:
             return False
         merged = list(m1[1])
@@ -268,10 +264,10 @@ class QuineMcCluskey:
             if self.minimal_expr:
                 self.minimal_expr += _DISJUNCTION
             self.minimal_expr += '('
-            for i in range(len(epi)):
-                if epi[i] == '_':
+            for i, x in enumerate(epi):
+                if x == '_':
                     continue
-                if epi[i] == 1:
+                if x == 1:
                     self.minimal_expr += vars_[i]
                     self.minimal_expr += _CONJUNCTION
                 else:
@@ -317,7 +313,6 @@ if __name__ == '__main__':
         else:
             Q.minimize(json.loads(input('Truthtable list: ')))
         print(Q.minimal_expr)
-
 
     # Q = QuineMcCluskey()
     # print(Q.minimize([1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0]))  # cyclic
