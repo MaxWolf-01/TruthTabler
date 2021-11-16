@@ -29,7 +29,7 @@ def build_box(space, x, y, sign, is_negated0, is_negated1):
             space[x_ + counter][y_] = j
             counter += 1
 
-    struct = ("|---|", f"|{sign[0]}|" + ("o" if sign[1] else "-") + LINE_CORNER, "|---|")
+    struct = ("|###|", f"|{sign[0]}|" + ("o" if sign[1] else "-") + LINE_CORNER, "|###|")
     offset = 0
     for i in struct:
         write_blueprint(x, y + offset, i)
@@ -188,17 +188,23 @@ def fill_circuit(tree, variables):
 
 def create_circuit(tree, variables):
     global LINE_WIDTH
-    LINE_WIDTH = len(variables) * 2 + 2
+    LINE_WIDTH = len(variables) * 2 + 3
     return fill_circuit(tree, variables)[0]
 
 
 # create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"])
-# create_circuit((("NOT", "A"), "AND", (("A", ), "AND", ("NOT", "B"))), ["A", "B"])
+# c = create_circuit((("NOT", "A"), "AND", (("A", ), "AND", ("NOT", "B"))), ["A", "B"])
+# print_space(c, [])
 # create_circuit((("A",), "AND", (("NOT", "A"), "AND", (("A",), "AND", ("NOT", "B")))), ["A", "B"])
 # create_circuit((("NOT", "A"), "AND", ((("NOT", "B"), "AND", ("NOT", "A")), "AND", ("NOT", "B"))), ["A", "B"])
 # create_circuit((((("NOT", "B"), "AND", ("B", )), "AND", "B"), "AND", ("NOT", (("B", ), "AND", ("B", )))), ["B"])
-c = create_circuit(((("NOT", "R"), "AND", (("NOT", "S"), "OR", ("Q", ))),
-                   "OR",
-                    (("R", ), "AND", ((("P", ), "NAND", ("S", )), "OR", (("NOT", "P"), "AND", ("NOT", "Q"))))),
-                   ["P", "Q", "R", "S"])
-print_space(c, ["P", "Q", "R", "S"])
+# c = create_circuit(((("NOT", "R"), "AND", (("NOT", "S"), "OR", ("Q", ))),
+#                   "OR",
+#                    (("R", ), "AND", ((("P", ), "NAND", ("S", )), "OR", (("NOT", "P"), "AND", ("NOT", "Q"))))),
+#                   ["P", "Q", "R", "S"])
+# print_space(c, ["P", "Q", "R", "S"])
+# input()
+
+# print_space(create_circuit([[['A'], 'AND', ['B']], 'OR', [['NOT', 'A'], 'AND', ['NOT', 'B']]], ["A", "B"]), ["A", "B"])
+
+# print_space(create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"]), ["A", "B"])

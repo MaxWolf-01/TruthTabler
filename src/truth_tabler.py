@@ -6,6 +6,7 @@ from src import circuit_creator
 from bool_expressions import TruthTable, ExpressionSolver
 from normal_forms import CCNF, CDNF, _CONJUNCTION, _DISJUNCTION
 from optimization import QuineMcCluskey
+from truth_table import prepare
 
 
 class TruthTabler:
@@ -52,8 +53,6 @@ class TruthTabler:
                            f'\n Minimal expression:'
                            f'\n    \t{self.minimal_expr}'
                            f'\n {self.result}')
-
-        circuit = circuit_creator.create_circuit([])
 
     def _get_formated_OGexpr(self):
         # prevents non unique field names for prettytable (if an expression is a single variable)

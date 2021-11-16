@@ -1,12 +1,6 @@
 from circuit_creator_static_variables import *
 
 
-def create_box(sign):
-    return f"+---+" \
-           f"|{sign}|" \
-           f"+---+"
-
-
 def is_variable(branch):
     return all(isinstance(x, str) for x in branch)
 
@@ -17,16 +11,6 @@ def is_negated(branch):
 
 def get_variable(branch):
     return branch[-1]
-
-
-def build_space(height, width):
-    space = []
-
-    # we dont do one liners here
-    for i_width in range(width + 3):
-        space.append([" "] * height)
-
-    return space
 
 
 def build_lines(height, var_count):
