@@ -2,7 +2,7 @@ from copy import deepcopy
 
 from prettytable import PrettyTable
 
-import circuit_creator
+from src import circuit_creator
 from bool_expressions import TruthTable, ExpressionSolver
 from normal_forms import CCNF, CDNF, _CONJUNCTION, _DISJUNCTION
 from optimization import QuineMcCluskey
