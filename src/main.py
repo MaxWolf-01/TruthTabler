@@ -10,7 +10,7 @@ if __name__ == '__main__':
     def info():
         print(f"Valid variables are alphabets(lower and upper is treated as 1) "
               f"\nValid Operators are: {list(OPERATORS.values())}"
-              f"\nOperator heirarchy(high to low): {list(OPERATORS.keys())}")
+              f"\nOperator hierarchy(high to low): {list(OPERATORS.keys())}")
 
     print('Type help for help')
     while True:
