@@ -38,17 +38,21 @@ def build_box(space, x, y, sign, is_negated0, is_negated1):
     space[x - 1][y + 2] = "o" if is_negated1 else "-"
 
 
-def print_space(space, variables):
-    print(" ".join(variables))
+def space_to_string(space, variables):
+    out = " ".join(variables)
 
-    height = len(space[0])
-
-    for y in range(height):
+    for y in range(len(space[0])):
         cache = ""
         for x in range(len(space)):
             cache += space[x][y]
 
-        print(cache)
+        out += "\n" + cache
+
+    return out
+
+
+def print_space(space, variables):
+    print(space_to_string(space, variables))
 
 
 def draw_horizontal_connected_line(space, x, y, length):
@@ -191,10 +195,22 @@ def create_circuit(tree, variables):
     return fill_circuit(tree, variables)[0]
 
 
-def create_circuit_from_string(expr):
-    tree = Node(expr).get_expression_as_lists()
-    vars_ = getVariables(expr)
+def create_circuit_from_expr(expr):
+    node = Node(expr)
+    tree = node.get_expression_as_lists()
+    vars_ = getVariables(prepare(expr))
     return create_circuit(tree, vars_)
+
+
+def create_circuit_string_from_expr(expr):
+    node = Node(expr)
+    tree = node.get_expression_as_lists()
+    vars_ = getVariables(prepare(expr))
+    return space_to_string(create_circuit(tree, vars_), vars_)
+
+
+def print_circuit_from_expr(expr):
+    print(create_circuit_string_from_expr(expr))
 
 
 # create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"])
@@ -210,6 +226,10 @@ def create_circuit_from_string(expr):
 # print_space(c, ["P", "Q", "R", "S"])
 # input()
 
-# print_space(create_circuit([[['A'], 'AND', ['B']], 'OR', [['NOT', 'A'], 'AND', ['NOT', 'B']]], ["A", "B"]), ["A", "B"])
-
+# print_space(create_circuit([[['A'], 'AND', ['B']], 'OR', [['NOT', 'A'], 'AND', ['NOT', 'B']]], ["A", "B"]), ["A", "B"]
+# )
 # print_space(create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"]), ["A", "B"])
+
+# print_circuit_from_expr(
+#     "(A or not b) if c and e if e == h or x and x xor y or  (not a nand l)"
+# )

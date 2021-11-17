@@ -8,6 +8,7 @@ XOR_SIGN = (" =1", False)
 UNEQUAL_SIGN = XOR_SIGN
 
 EQUAL_SIGN = (" =1", True)
+EQ_SIGN = EQUAL_SIGN
 NXOR_SIGN = EQUAL_SIGN
 
 IF_SIGN = (" ->", False)
