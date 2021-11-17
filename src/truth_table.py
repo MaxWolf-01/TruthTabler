@@ -29,7 +29,7 @@ def prepare(expr):
     """
     turns the expression into a list, using '( )!¬·+-' as delimiters. Case is ignored.
     """
-    return [e for e in re.split('([(| |)|!|¬|·|+|-|↓|↑|"])', expr.upper()) if e != " " and e != ""]
+    return [e for e in re.split('([(| |)|!|¬|·|+|-|↓|↑])', expr.upper()) if e != " " and e != ""]
 
 
 def check_brackets(expr):
