@@ -1,8 +1,7 @@
 from circuit_creator_helper_methods import *
 from circuit_creator_static_variables import *
-from truth_table import prepare, getVariables
-from bool_expressions import Node, translate_operators
-
+from bool_expressions import Node
+from truth_table import getVariables
 
 LINE_WIDTH = 0
 
@@ -114,7 +113,7 @@ def fill_circuit(tree, variables):
         upper_space = build_lines(4, var_count)
         extend_space(upper_space, 8 * (level + 1), 4)
 
-        build_box(upper_space, LINE_WIDTH + 8 * level, 1,  globals()[f"{operator}_SIGN"],
+        build_box(upper_space, LINE_WIDTH + 8 * level, 1, globals()[f"{operator}_SIGN"],
                   is_negated(tree[0]), is_negated(tree[2]))
 
         draw_horizontal_connected_line(upper_space, idx_var0 * 2, 1, LINE_WIDTH + 8 * level - idx_var0 * 2 - 1)
@@ -197,19 +196,6 @@ def create_circuit_from_string(expr):
     return create_circuit(tree, vars_)
 
 
-# create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"])
-# c = create_circuit((("NOT", "A"), "AND", (("A", ), "AND", ("NOT", "B"))), ["A", "B"])
-# print_space(c, [])
-# create_circuit((("A",), "AND", (("NOT", "A"), "AND", (("A",), "AND", ("NOT", "B")))), ["A", "B"])
-# create_circuit((("NOT", "A"), "AND", ((("NOT", "B"), "AND", ("NOT", "A")), "AND", ("NOT", "B"))), ["A", "B"])
-# create_circuit((((("NOT", "B"), "AND", ("B", )), "AND", "B"), "AND", ("NOT", (("B", ), "AND", ("B", )))), ["B"])
-# c = create_circuit(((("NOT", "R"), "AND", (("NOT", "S"), "OR", ("Q", ))),
-#                   "OR",
-#                    (("R", ), "AND", ((("P", ), "NAND", ("S", )), "OR", (("NOT", "P"), "AND", ("NOT", "Q"))))),
-#                   ["P", "Q", "R", "S"])
-# print_space(c, ["P", "Q", "R", "S"])
-# input()
-
-# print_space(create_circuit([[['A'], 'AND', ['B']], 'OR', [['NOT', 'A'], 'AND', ['NOT', 'B']]], ["A", "B"]), ["A", "B"])
-
-# print_space(create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"]), ["A", "B"])
+if __name__ == '__main__':
+    xx = 'A NAND A'
+    print_space(create_circuit_from_string(xx), getVariables(xx))
