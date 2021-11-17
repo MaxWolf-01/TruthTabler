@@ -7,6 +7,7 @@ import truth_table
 from bool_expressions import ExpressionSolver
 from normal_forms import CCNF, CDNF, _CONJUNCTION, _DISJUNCTION
 from optimization import QuineMcCluskey
+from truth_table import prepare
 
 
 class TruthTabler:
@@ -36,7 +37,7 @@ class TruthTabler:
         print('Minimizing...')
         self.minimal_expr = QuineMcCluskey(self.result, self.TT.variables).minimal_expr
         print('Creating Circuit...')
-        self.circuit = circuit_creator.create_circuit_from_string(self.minimal_expr)
+        self.circuit = circuit_creator.create_circuit_from_expr(self.minimal_expr)
         self.variables = truth_table.getVariables(self.expr)
 
     def print(self):
@@ -65,3 +66,6 @@ class TruthTabler:
         if len(self.expr) == 1:
             expr = '(' + self.expr + ')'
         return expr
+
+
+"-(--((-p or --q) and -(q and -p)) equal ((q if p) and (-p or --q))) if ((r and -s) unequal (p and -r))"

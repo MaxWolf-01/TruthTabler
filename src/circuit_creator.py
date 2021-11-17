@@ -1,7 +1,7 @@
 from circuit_creator_helper_methods import *
 from circuit_creator_static_variables import *
-from bool_expressions import Node
-from truth_table import getVariables
+from truth_table import prepare, getVariables
+from bool_expressions import Node, translate_operators
 
 LINE_WIDTH = 0
 
@@ -10,14 +10,14 @@ def connect_lines(lines, var_count, idx_var0, idx_var1):
     idx0 = idx_var0 * 2
     idx1 = idx_var1 * 2
 
-    lines[idx0][1] = LINE_JOIN
-    lines[idx1][3] = LINE_JOIN
+    lines[idx0][0] = LINE_JOIN
+    lines[idx1][2] = LINE_JOIN
 
-    for i in range(idx_var0 * 2 + 1, var_count * 2 + 2):
-        lines[i][1] = LINE_HORIZONTAL
+    for i in range(idx0 + 1, var_count * 2 + 2):
+        lines[i][0] = LINE_HORIZONTAL
 
-    for i in range(idx_var1 * 2 + 1, var_count * 2 + 2):
-        lines[i][3] = LINE_HORIZONTAL
+    for i in range(idx1 + 1, var_count * 2 + 2):
+        lines[i][2] = LINE_HORIZONTAL
 
 
 def build_box(space, x, y, sign, is_negated0, is_negated1):
@@ -37,17 +37,21 @@ def build_box(space, x, y, sign, is_negated0, is_negated1):
     space[x - 1][y + 2] = "o" if is_negated1 else "-"
 
 
-def print_space(space, variables):
-    print(" ".join(variables))
+def space_to_string(space, variables):
+    out = " ".join(variables)
 
-    height = len(space[0])
-
-    for y in range(height):
+    for y in range(len(space[0])):
         cache = ""
         for x in range(len(space)):
             cache += space[x][y]
 
-        print(cache)
+        out += "\n" + cache
+
+    return out
+
+
+def print_space(space, variables):
+    print(space_to_string(space, variables))
 
 
 def draw_horizontal_connected_line(space, x, y, length):
@@ -96,13 +100,13 @@ def fill_circuit(tree, variables):
         idx_var0 = variables.index(get_variable(tree[0]))
         idx_var1 = variables.index(get_variable(tree[2]))
 
-        space = build_lines(4, var_count)
+        space = build_lines(3, var_count)
         connect_lines(space, var_count, idx_var0, idx_var1)
 
-        extend_space(space, 8, 4)
-        build_box(space, LINE_WIDTH, 1, globals()[f"{operator}_SIGN"], is_negated(tree[0]), is_negated(tree[2]))
+        extend_space(space, 8, 3)
+        build_box(space, LINE_WIDTH, 0, globals()[f"{operator}_SIGN"], is_negated(tree[0]), is_negated(tree[2]))
 
-        return space, LINE_WIDTH + 6, 2, 1
+        return space, LINE_WIDTH + 6, 1, 1
 
     elif is_var0 and not is_var1:
         idx_var0 = variables.index(get_variable(tree[0]))
@@ -110,20 +114,19 @@ def fill_circuit(tree, variables):
         lower_space, out_x, out_y, level = fill_circuit(tree[2], variables)
         extend_space(lower_space, 8, len(lower_space[0]))
 
-        upper_space = build_lines(4, var_count)
-        extend_space(upper_space, 8 * (level + 1), 4)
+        upper_space = build_lines(3, var_count)
+        extend_space(upper_space, 8 * (level + 1), 3)
 
-        build_box(upper_space, LINE_WIDTH + 8 * level, 1, globals()[f"{operator}_SIGN"],
+        build_box(upper_space, LINE_WIDTH + 8 * level, 0, globals()[f"{operator}_SIGN"],
                   is_negated(tree[0]), is_negated(tree[2]))
 
-        draw_horizontal_connected_line(upper_space, idx_var0 * 2, 1, LINE_WIDTH + 8 * level - idx_var0 * 2 - 1)
+        draw_horizontal_connected_line(upper_space, idx_var0 * 2, 0, LINE_WIDTH + 8 * level - idx_var0 * 2 - 1)
         merge_spaces(upper_space, lower_space)
+        out_y += 3
 
-        out_y += 4
+        draw_vertical_line_up(upper_space, out_x, out_y - 1, out_y - 2)
 
-        draw_vertical_line_up(upper_space, out_x, out_y - 1, out_y - 3)
-
-        return upper_space, LINE_WIDTH + 8 * (level + 1) - 2, 2, level + 1
+        return upper_space, LINE_WIDTH + 8 * (level + 1) - 2, 1, level + 1
 
     elif not is_var0 and is_var1:
         idx_var1 = variables.index(get_variable(tree[2]))
@@ -131,13 +134,13 @@ def fill_circuit(tree, variables):
         upper_space, out_x, out_y, level = fill_circuit(tree[0], variables)
         extend_space(upper_space, 8, len(upper_space[0]))
 
-        lower_space = build_lines(4, var_count)
-        extend_space(lower_space, 8 * (level + 1), 4)
+        lower_space = build_lines(3, var_count)
+        extend_space(lower_space, 8 * (level + 1), 3)
 
-        build_box(lower_space, LINE_WIDTH + 8 * level, 1, globals()[f"{operator}_SIGN"],
+        build_box(lower_space, LINE_WIDTH + 8 * level, 0, globals()[f"{operator}_SIGN"],
                   is_negated(tree[0]), is_negated(tree[2]))
 
-        draw_horizontal_connected_line(lower_space, idx_var1 * 2, 3, LINE_WIDTH + 8 * level - idx_var1 * 2 - 1)
+        draw_horizontal_connected_line(lower_space, idx_var1 * 2, 2, LINE_WIDTH + 8 * level - idx_var1 * 2 - 1)
         merge_spaces(upper_space, lower_space)
 
         draw_vertical_line_down(upper_space, out_x, out_y + 1, len(upper_space[0]) - out_y - 3)
@@ -160,13 +163,13 @@ def fill_circuit(tree, variables):
 
         level = max(upper_level, lower_level)
 
-        middle_space = build_lines(4, var_count)
-        extend_space(middle_space, LINE_WIDTH + 8 * (level + 1), 4)
-        build_box(middle_space, LINE_WIDTH + 8 * level, 1, globals()[f"{operator}_SIGN"],
+        middle_space = build_lines(3, var_count)
+        extend_space(middle_space, LINE_WIDTH + 8 * (level + 1), 3)
+        build_box(middle_space, LINE_WIDTH + 8 * level, 0, globals()[f"{operator}_SIGN"],
                   is_negated(tree[0]), is_negated(tree[2]))
 
-        middle_upper_in_y = 1 + len(upper_space[0])
-        middle_lower_in_y = 3 + len(upper_space[0])
+        middle_upper_in_y = len(upper_space[0])
+        middle_lower_in_y = 2 + len(upper_space[0])
         merge_spaces(upper_space, middle_space)
 
         lower_out_y += len(upper_space[0])
@@ -190,12 +193,46 @@ def create_circuit(tree, variables):
     return fill_circuit(tree, variables)[0]
 
 
-def create_circuit_from_string(expr):
-    tree = Node(expr).get_expression_as_lists()
-    vars_ = getVariables(expr)
+def create_circuit_from_expr(expr):
+    node = Node(expr)
+    tree = node.get_expression_as_lists()
+    vars_ = getVariables(prepare(expr))
     return create_circuit(tree, vars_)
 
 
-if __name__ == '__main__':
-    xx = 'A NAND A'
-    print_space(create_circuit_from_string(xx), getVariables(xx))
+def create_circuit_string_from_expr(expr):
+    node = Node(expr)
+    tree = node.get_expression_as_lists()
+    vars_ = getVariables(prepare(expr))
+    return space_to_string(create_circuit(tree, vars_), vars_)
+
+
+def print_circuit_from_expr(expr):
+    print(create_circuit_string_from_expr(expr))
+
+
+# create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"])
+# c = create_circuit((("NOT", "A"), "AND", (("A", ), "AND", ("NOT", "B"))), ["A", "B"])
+# print_space(c, [])
+# create_circuit((("A",), "AND", (("NOT", "A"), "AND", (("A",), "AND", ("NOT", "B")))), ["A", "B"])
+# create_circuit((("NOT", "A"), "AND", ((("NOT", "B"), "AND", ("NOT", "A")), "AND", ("NOT", "B"))), ["A", "B"])
+# create_circuit((((("NOT", "B"), "AND", ("B", )), "AND", "B"), "AND", ("NOT", (("B", ), "AND", ("B", )))), ["B"])
+# c = create_circuit(((("NOT", "R"), "AND", (("NOT", "S"), "OR", ("Q", ))),
+#                   "OR",
+#                    (("R", ), "AND", ((("P", ), "NAND", ("S", )), "OR", (("NOT", "P"), "AND", ("NOT", "Q"))))),
+#                   ["P", "Q", "R", "S"])
+# print_space(c, ["P", "Q", "R", "S"])
+# input()
+
+# print_space(create_circuit([[['A'], 'AND', ['B']], 'OR', [['NOT', 'A'], 'AND', ['NOT', 'B']]], ["A", "B"]), ["A", "B"]
+# )
+# print_space(create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"]), ["A", "B"])
+
+f = open("long_boy.txt", "r", encoding="UTF-8")
+l = f.readline()
+
+print_circuit_from_expr(
+    l
+)
+
+input()
