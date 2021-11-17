@@ -2,8 +2,8 @@ from copy import deepcopy
 
 from prettytable import PrettyTable
 
-from src import circuit_creator
-from src import truth_table
+import circuit_creator
+import truth_table
 from bool_expressions import ExpressionSolver
 from normal_forms import CCNF, CDNF, _CONJUNCTION, _DISJUNCTION
 from optimization import QuineMcCluskey
@@ -37,7 +37,7 @@ class TruthTabler:
         self.minimal_expr = QuineMcCluskey(self.result, self.TT.variables).minimal_expr
         print('Creating Circuit...')
         self.circuit = circuit_creator.create_circuit_from_string(self.minimal_expr)
-        self.variables = truth_table.getVariables(self.minimal_expr)
+        self.variables = truth_table.getVariables(self.expr)
 
     def print(self):
         prettyTable = PrettyTable()
