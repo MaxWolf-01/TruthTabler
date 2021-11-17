@@ -198,6 +198,8 @@ class Node:
         return expr
 
     def add_children(self, expr: list):
+        if self.handle_constants(expr):
+            return
         no_brackets = list(filter(lambda x: x not in "()", expr))
         if len(no_brackets) == 1:
             self.var_ = no_brackets[0]
@@ -212,6 +214,12 @@ class Node:
             self.left = Node(expr[:self.operator_idx])
         if expr[self.operator_idx + 1:]:
             self.right = Node(expr[self.operator_idx + 1:])
+
+    def handle_constants(self, expr):
+        if isinstance(expr, int):
+            self.var_ = [expr]
+            return True
+        return False
 
     def get_expression_as_string(self):
         expr = ''
@@ -278,14 +286,15 @@ def translate_operators(expr):
 
 
 def remove_redundant_brackets(expr):
-    if expr.count('(') != expr.count(')'):
-        # ((NOT A OR B) => NOT A OR B  (can happen in parsing process)
+    expr_levels = get_expression_levels(expr)
+    if expr.count('(') != expr.count(')') and len(expr_levels) == 1:
+        # ((NOT A OR B) => NOT A OR B  (can happen in parsing process) # (NOT(NOT A OR B) => ignored
         return list(filter(lambda x: x not in "()", expr))
-    return remove_redundant_outer_brackets(expr)
+    return remove_redundant_outer_brackets(expr, expr_levels)
 
 
-def remove_redundant_outer_brackets(expr):
-    while expr.__contains__('(') and len(get_expression_levels(expr)) == 1:
+def remove_redundant_outer_brackets(expr, expr_levels):
+    while expr.__contains__('(') and len(expr_levels) == 1:
         # ((A AND B)) => A AND B
         expr = remove_outer_brackets(expr)
     return expr
