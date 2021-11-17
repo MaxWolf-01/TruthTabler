@@ -4,8 +4,12 @@ from prettytable import PrettyTable
 from Exceptions import BracketException, InvalidExpressionException
 
 
-def getVariables(expr: list):
+def getVariables(expr):
     # Variables have to be a letter and of length 1
+    if isinstance(expr, int):
+        return None  # todo ?
+    if isinstance(expr, str):
+        expr = prepare(expr)
     vars_ = sorted({x for x in expr if x.isalpha() and len(x) == 1})
     if not vars_:
         raise InvalidExpressionException('Expression has no valid variable(s)! (Must be single letters)')
@@ -36,7 +40,7 @@ def check_brackets(expr):
 class TruthTable:
     def __init__(self, expr: str, reversed_table=False):
         check_brackets(expr)
-        self.variables = getVariables(prepare(expr))
+        self.variables = getVariables(expr)
         self.table = createTT(len(self.variables))
         if reversed_table:
             self.table = reverse_table(self.table)
