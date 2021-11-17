@@ -122,7 +122,7 @@ class ExpressionSolver:
         self.TT = truthTable if truthTable else TruthTable(expr)
         if is_root:
             self.expr = prepare(Node(expr).get_expression_as_string())
-            remove_all_double_negations(expr)
+            remove_all_double_negations(expr)  # todo ??? before, assign,....test
         else:
             self.expr = expr
 

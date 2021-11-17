@@ -28,6 +28,9 @@ class QuineMcCluskey:
             self.minimize(truth_table_result, variable_names)
 
     def minimize(self, result, variable_names=None):
+        """
+        :returns minimized boolean expression in CDNF(SOP) form.
+        """
         if len(result) % 2:
             raise Exception(f'Invalid result length {len(result)}. Not a power of 2.')
         self.__init__()
