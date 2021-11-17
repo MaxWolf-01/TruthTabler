@@ -3,7 +3,6 @@ from circuit_creator_static_variables import *
 from truth_table import prepare, getVariables
 from bool_expressions import Node, translate_operators
 
-
 LINE_WIDTH = 0
 
 
@@ -118,7 +117,7 @@ def fill_circuit(tree, variables):
         upper_space = build_lines(3, var_count)
         extend_space(upper_space, 8 * (level + 1), 3)
 
-        build_box(upper_space, LINE_WIDTH + 8 * level, 0,  globals()[f"{operator}_SIGN"],
+        build_box(upper_space, LINE_WIDTH + 8 * level, 0, globals()[f"{operator}_SIGN"],
                   is_negated(tree[0]), is_negated(tree[2]))
 
         draw_horizontal_connected_line(upper_space, idx_var0 * 2, 0, LINE_WIDTH + 8 * level - idx_var0 * 2 - 1)
@@ -229,6 +228,11 @@ def print_circuit_from_expr(expr):
 # )
 # print_space(create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"]), ["A", "B"])
 
-# print_circuit_from_expr(
-#     "(( A ↑ B )↑( A ↑ B )↑(( A ↑( B )↑( B ))↑( A ↑( B )↑( B ))↑(( A )↑( A )↑( B )↑( B ))↑(( A )↑( A )↑( B )↑( B )))↑(( A ↑( B )↑( B ))↑( A ↑( B )↑( B ))↑(( A )↑( A )↑( B )↑( B ))↑(( A )↑( A )↑( B )↑( B ))))↑(( A ↑ B )↑( A ↑ B )↑(( A ↑( B )↑( B ))↑( A ↑( B )↑( B ))↑(( A )↑( A )↑( B )↑( B ))↑(( A )↑( A )↑( B )↑( B )))↑(( A ↑( B )↑( B ))↑( A ↑( B )↑( B ))↑(( A )↑( A )↑( B )↑( B ))↑(( A )↑( A )↑( B )↑( B ))))"
-# )
+f = open("long_boy.txt", "r", encoding="UTF-8")
+l = f.readline()
+
+print_circuit_from_expr(
+    l
+)
+
+input()
