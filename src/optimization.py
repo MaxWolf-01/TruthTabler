@@ -10,7 +10,7 @@ import cProfile
 import pstats
 
 
-# todo Dont cares (just omit the terms in the pi_table but use them for min term creation i think)
+# TODO sort minterms alphabetically in minimal expression (nicer for circuit)
 
 def factor_expression():
     pass  # todo
@@ -20,6 +20,7 @@ class QuineMcCluskey:
     def __init__(self, truth_table_result=None, variable_names=None):
         self.TT = []
         self.minterms = []
+        self.dont_cares = []
         self.minterm_groups = {}
         self.prime_implicants = set()
         self.essential_prime_implicants = set()
@@ -33,6 +34,7 @@ class QuineMcCluskey:
         self.__init__()
         self.TT = createTT(self.get_num_vars(result))
         self.minterms = self.get_minterm_idxs(result)
+        self.dont_cares = self.get_DC_idxs(result)
         if self.is_constant()[0]:
             constant = self.is_constant()[1]
             self.minimal_expr = constant
@@ -49,7 +51,11 @@ class QuineMcCluskey:
 
     @staticmethod
     def get_minterm_idxs(truth_table_result):
-        return tuple(i for i, x in enumerate(truth_table_result) if x == 1)
+        return tuple(i for i, x in enumerate(truth_table_result) if x in (1, 'x', 'X'))
+
+    @staticmethod
+    def get_DC_idxs(trut_table_resullt):
+        return tuple(i for i, x in enumerate(trut_table_resullt) if isinstance(x, str) and x in 'xX')
 
     def is_constant(self):
         if not self.minterms:
@@ -88,7 +94,7 @@ class QuineMcCluskey:
                         ticked.add(minterm)
                         ticked.add(next_minterm)
 
-                if minterm not in ticked:
+                if minterm not in ticked and not self.is_DC(minterm):
                     self.prime_implicants.add(minterm)
         self._check_last_group_for_ticked_minterms(ticked)
         if merged_minterm_groups:
@@ -112,9 +118,14 @@ class QuineMcCluskey:
         minterm_numbers = tuple(set(m1[0]).union(set(m2[0])))
         return minterm_numbers, tuple(merged)
 
+    def is_DC(self, minterm):
+        # if all of the minterms in the non ticked (merged) minterm
+        # are Dont-Cares we can exlude it from prime implicants
+        return all(x in self.dont_cares for x in minterm[0])
+
     def _check_last_group_for_ticked_minterms(self, ticked):
         for minterm in self.minterm_groups[list(self.minterm_groups.keys())[-1]]:
-            if minterm not in ticked:
+            if minterm not in ticked and not self.is_DC(minterm):
                 self.prime_implicants.add(minterm)
 
     def _solve_prime_implicant_table(self):
@@ -126,7 +137,7 @@ class QuineMcCluskey:
             if initial_table == pi_table:  # no further reduction possible
                 break
         if pi_table:
-            raise Exception("This boolean function is cyclic. Not implemented yet")  # todo
+            raise NotImplementedError("This boolean function is cyclic.")  # todo
 
     def _reduce_pi_table(self, pi_table):
         pi_table = self._extract_epis(pi_table)
@@ -308,7 +319,11 @@ if __name__ == '__main__':
             length = int(input("Table length: "))
             TTvalues = []
             for index in range(length):
-                TTvalues.append(int(input(f'{index}: ')))
+                in_ = input(f'{index}: ')
+                if in_ in 'xX':
+                    TTvalues.append('X')
+                else:
+                    TTvalues.append(int(in_))
             Q.minimize(TTvalues)
         else:
             Q.minimize(json.loads(input('Truthtable list: ')))
