@@ -1,9 +1,11 @@
 from circuit_creator_helper_methods import *
 from circuit_creator_static_variables import *
-from truth_table import prepare_to_list, getVariables
+from truth_table import prepare, getVariables
 from bool_expressions import Node, translate_operators
+import traceback
 
 LINE_WIDTH = 0
+DRAW_NOT = False
 
 
 def connect_lines(lines, var_count, idx_var0, idx_var1):
@@ -37,6 +39,10 @@ def build_box(space, x, y, sign, is_negated0, is_negated1):
     space[x - 1][y + 2] = "o" if is_negated1 else "-"
 
 
+def build_negation(space, x, y):
+    pass
+
+
 def space_to_string(space, variables):
     out = " ".join(variables)
 
@@ -44,7 +50,6 @@ def space_to_string(space, variables):
         cache = ""
         for x in range(len(space)):
             cache += space[x][y]
-
         out += "\n" + cache
 
     return out
@@ -187,33 +192,29 @@ def fill_circuit(tree, variables):
         return upper_space, LINE_WIDTH + 8 * (level + 1) - 2, middle_upper_in_y + 1, level + 1
 
 
-def create_circuit(tree, variables):
-    global LINE_WIDTH
+def create_circuit(tree, variables, draw_not=False):
+    global LINE_WIDTH, DRAW_NOT
+    DRAW_NOT = draw_not
     LINE_WIDTH = len(variables) * 2 + 3
     return fill_circuit(tree, variables)[0]
 
 
 def create_circuit_from_expr(expr):
     node = Node(expr)
-    tree = node.get_expression_as_lists()  # TODO tautologies/contradictions e.g. a if b and b if a
-    vars_ = getVariables(prepare_to_list(expr))
+    tree = node.get_expression_as_lists()
+    vars_ = getVariables(prepare(expr))
     return create_circuit(tree, vars_)
 
 
 def create_circuit_string_from_expr(expr):
     node = Node(expr)
     tree = node.get_expression_as_lists()
-    vars_ = getVariables(prepare_to_list(expr))
+    vars_ = getVariables(prepare(expr))
     return space_to_string(create_circuit(tree, vars_), vars_)
 
 
 def print_circuit_from_expr(expr):
     print(create_circuit_string_from_expr(expr))
-
-
-if __name__ == '__main__':
-    while True:
-        print_circuit_from_expr(input('Expression: '))
 
 
 # create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"])
@@ -233,11 +234,9 @@ if __name__ == '__main__':
 # )
 # print_space(create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"]), ["A", "B"])
 
-# f = open("long_boy.txt", "r", encoding="UTF-8")
-# l = f.readline()
-#
-# print_circuit_from_expr(
-#     l
-# )
-#
-# input()
+if __name__ == '__main__':
+    while True:
+        try:
+            print_circuit_from_expr(input("Expression: "))
+        except Exception as e:
+            traceback.print_exc()
