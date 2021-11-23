@@ -1,6 +1,6 @@
 from circuit_creator_helper_methods import *
 from circuit_creator_static_variables import *
-from truth_table import prepare, getVariables
+from truth_table import prepare_to_list, getVariables
 from bool_expressions import Node, translate_operators
 
 LINE_WIDTH = 0
@@ -195,20 +195,25 @@ def create_circuit(tree, variables):
 
 def create_circuit_from_expr(expr):
     node = Node(expr)
-    tree = node.get_expression_as_lists()
-    vars_ = getVariables(prepare(expr))
+    tree = node.get_expression_as_lists()  # TODO tautologies/contradictions e.g. a if b and b if a
+    vars_ = getVariables(prepare_to_list(expr))
     return create_circuit(tree, vars_)
 
 
 def create_circuit_string_from_expr(expr):
     node = Node(expr)
     tree = node.get_expression_as_lists()
-    vars_ = getVariables(prepare(expr))
+    vars_ = getVariables(prepare_to_list(expr))
     return space_to_string(create_circuit(tree, vars_), vars_)
 
 
 def print_circuit_from_expr(expr):
     print(create_circuit_string_from_expr(expr))
+
+
+if __name__ == '__main__':
+    while True:
+        print_circuit_from_expr(input('Expression: '))
 
 
 # create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"])
@@ -228,11 +233,11 @@ def print_circuit_from_expr(expr):
 # )
 # print_space(create_circuit((("A", ), "AND", ("NOT", "B")), ["A", "B"]), ["A", "B"])
 
-f = open("long_boy.txt", "r", encoding="UTF-8")
-l = f.readline()
-
-print_circuit_from_expr(
-    l
-)
-
-input()
+# f = open("long_boy.txt", "r", encoding="UTF-8")
+# l = f.readline()
+#
+# print_circuit_from_expr(
+#     l
+# )
+#
+# input()
