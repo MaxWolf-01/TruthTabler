@@ -5,9 +5,9 @@ from prettytable import PrettyTable
 import circuit_creator
 import truth_table
 from bool_expressions import ExpressionSolver
-from normal_forms import CCNF, CDNF, _CONJUNCTION, _DISJUNCTION
+from normal_forms import CCNF, CDNF
+from operator_signs import _AND, _OR
 from optimization import QuineMcCluskey
-from truth_table import prepare
 
 
 class TruthTabler:
@@ -28,7 +28,7 @@ class TruthTabler:
         self.__init__()
         self.TT = truth_table.TruthTable(expr)
         self.expr = expr
-        self.xTree = ExpressionSolver(expr, self.TT, is_root=True)
+        self.xTree = ExpressionSolver(expr, self.TT)
         print('Solving expression...')
         self.result = self.xTree.solve()
         print('Creating normal forms...')
@@ -43,7 +43,7 @@ class TruthTabler:
     def print(self):
         prettyTable = PrettyTable()
 
-        field_names = ['#', *deepcopy(self.TT.variables), self._get_formated_OGexpr()]
+        field_names = ['#', *deepcopy(self.TT.variables), self._get_formated_OGexpr(self.expr)]
 
         rows = [[i, ] for i in range(len(self.TT.table))]
         for i in range(len(rows)):
@@ -52,7 +52,7 @@ class TruthTabler:
 
         prettyTable.field_names = field_names
         prettyTable.add_rows(rows)
-        print(prettyTable, f'\n Normal Forms: ({_CONJUNCTION} = AND; {_DISJUNCTION} = OR)'
+        print(prettyTable, f'\n Normal Forms: ({_AND} = AND; {_OR} = OR)'
                            f'\n   CDNF:\n \t{self.CDNF}'
                            f'\n   CCNF:\n \t{self.CCNF}\n'
                            f'\n Minimal expression:'
@@ -60,12 +60,9 @@ class TruthTabler:
                            f'\n {self.result}')
         circuit_creator.print_space(self.circuit, self.variables)
 
-    def _get_formated_OGexpr(self):
+    @staticmethod
+    def _get_formated_OGexpr(expr):
         # prevents non unique field names for prettytable (if an expression is a single variable)
-        expr = self.expr
-        if len(self.expr) == 1:
-            expr = '(' + self.expr + ')'
+        if len(expr) == 1:
+            expr = '(' + expr + ')'
         return expr
-
-
-"-(--((-p or --q) and -(q and -p)) equal ((q if p) and (-p or --q))) if ((r and -s) unequal (p and -r))"

@@ -1,9 +1,5 @@
+from operator_signs import _AND, _OR, _NOT
 from truth_table import TruthTable
-
-_CONJUNCTION = '·'
-_DISJUNCTION = '+'
-_NOT = '¬'
-# '∧', '∨' dont work in terminal; '||' is annoying bcs 2 chars
 
 
 class NormalForm:
@@ -46,9 +42,9 @@ class NormalForm:
 
 class CDNF(NormalForm):
     def __init__(self, truth_table, results):
-        super(CDNF, self).__init__(truth_table, results, [True, _CONJUNCTION, _DISJUNCTION])
+        super(CDNF, self).__init__(truth_table, results, [True, _AND, _OR])
 
 
 class CCNF(NormalForm):
     def __init__(self, truth_table, results):
-        super(CCNF, self).__init__(truth_table, results, [False, _DISJUNCTION, _CONJUNCTION])
+        super(CCNF, self).__init__(truth_table, results, [False, _OR, _AND])

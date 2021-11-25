@@ -1,9 +1,6 @@
 from bool_expressions import Node, translate_operators, ExpressionSolver
-from normal_forms import _NOT
 from truth_table import getVariables, prepare_to_list
-
-_NAND = '↑'
-_NOR = '↓'
+from operator_signs import _NAND, _NOR, _NOT
 
 
 class LogicGateMaker:
@@ -112,6 +109,7 @@ class ExpressionUnifier:
                     left = x
         if de_morgan:
             converted_expr = [_NOT, [[[_NOT, left]], sign, [_NOT, right]]]
+            # todo change to 'NOT' and use operator_signs only for printing ....
         else:
             if operator == 'NOT':
                 converted_expr = [_NOT, left]

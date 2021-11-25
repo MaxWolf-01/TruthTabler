@@ -3,7 +3,7 @@ import string
 from copy import deepcopy
 import json
 
-from normal_forms import _AND, _OR, _NOT
+from operator_signs import _AND, _OR, _NOT
 from truth_table import createTT
 
 import cProfile
