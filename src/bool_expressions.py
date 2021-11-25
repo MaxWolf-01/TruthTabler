@@ -1,5 +1,5 @@
 from Exceptions import InvalidExpressionException
-from truth_table import TruthTable, prepare
+from truth_table import TruthTable, prepare_to_list
 
 
 def NOT(p):
@@ -60,11 +60,7 @@ class AtomicExpression:
         if expression[0] == 'NOT':
             return NOT, expression[1:]
         elif len(expression) == 3:
-            try:
-                return globals()[expression.pop(1)], expression
-            except KeyError:
-                pass
-        raise InvalidExpressionException("Invalid operator.")
+            return globals()[expression.pop(1)], expression
 
 
 class AtomicExpressionSolver:
@@ -118,10 +114,10 @@ class ExpressionSolver:
     takes an expression parsed by the Node class and solves from most nested equation to the least.
     """
 
-    def __init__(self, expr: str, truthTable: TruthTable = None, is_root: bool = False):
+    def __init__(self, expr: str, truthTable: TruthTable = None, is_root: bool = True):
         self.TT = truthTable if truthTable else TruthTable(expr)
         if is_root:
-            self.expr = prepare(Node(expr).get_expression_as_string())
+            self.expr = prepare_to_list(Node(expr).get_expression_as_string())
             remove_all_double_negations(expr)
         else:
             self.expr = expr
@@ -176,6 +172,7 @@ def get_inner_expr_idx(expr):
                 inner_expr_start_idx = bracket_idxs[0]
                 inner_expr_end_idx = bracket_idxs[(open_brackets + closed_brackets) - 1]
                 return inner_expr_start_idx, inner_expr_end_idx
+    raise InvalidExpressionException('Expression is invalid.')
 
 
 def get_bracket_idxs(expr):
@@ -194,7 +191,7 @@ class Node:
     @staticmethod
     def prepare_expr(expr):
         if isinstance(expr, str):
-            return translate_operators(prepare(expr))
+            return translate_operators(prepare_to_list(expr))
         return expr
 
     def add_children(self, expr: list):
@@ -238,6 +235,7 @@ class Node:
         return expr
 
     def get_expression_as_lists(self):
+        # variables are put into extra lists for circuit_creator.py
         expr = []
         if self.is_not_None(self.left):
             expr.append(self.left.get_expression_as_lists())
@@ -314,8 +312,14 @@ def get_last_operator(expr):
             max([operator_keys.index(op) for op in get_operators(lowest_level)])
         ]
     except ValueError:
-        raise InvalidExpressionException("Invalid operator.")
-    last_operator_idx = lowest_level_idx[lowest_level.index(last_operator)]
+        nl = '\n'
+        raise InvalidExpressionException(f"Invalid operator in expression.\nSupported operators are:\n"
+                                         f"{nl.join(str(OPERATORS[k]) for k in OPERATORS)}")
+    if last_operator == 'NOT':
+        idx = min(i for i, x in enumerate(lowest_level) if x == last_operator)
+    else:
+        idx = max(i for i, x in enumerate(lowest_level) if x == last_operator)
+    last_operator_idx = lowest_level_idx[idx]
     return last_operator_idx
 
 
@@ -342,10 +346,11 @@ def get_operators(expr):
 
 
 def main():
-    in_ = input('Expression: ')
-    xTree = ExpressionSolver(in_, is_root=True)
-    print(in_)
-    print(xTree.solve())
+    while True:
+        in_ = input('Expression: ')
+        xTree = ExpressionSolver(in_)
+        print(in_)
+        print(xTree.solve())
 
 
 if __name__ == '__main__':
