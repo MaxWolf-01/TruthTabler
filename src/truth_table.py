@@ -9,7 +9,7 @@ def getVariables(expr):
     if isinstance(expr, int):
         return None  # todo ?
     if isinstance(expr, str):
-        expr = prepare(expr)
+        expr = prepare_to_list(expr)
     vars_ = sorted({x for x in expr if x.isalpha() and len(x) == 1})
     if not vars_:
         raise InvalidExpressionException('Expression has no valid variable(s)! (Must be single letters)')
@@ -25,7 +25,7 @@ def reverse_table(table):
     return table[::-1]
 
 
-def prepare(expr):
+def prepare_to_list(expr):
     """
     turns the expression into a list, using '( )!¬·+-' as delimiters. Case is ignored.
     """
