@@ -3,14 +3,12 @@ import string
 from copy import deepcopy
 import json
 
-from normal_forms import _CONJUNCTION, _DISJUNCTION, _NOT
+from normal_forms import _AND, _OR, _NOT
 from truth_table import createTT
 
 import cProfile
 import pstats
 
-
-# TODO sort minterms alphabetically in minimal expression (nicer for circuit)
 
 def factor_expression():
     pass  # todo
@@ -268,24 +266,31 @@ class QuineMcCluskey:
         return dominating_cols
 
     def _set_minimal_expr(self, variable_names=None):
-        vars_ = variable_names
-        if not variable_names:
-            vars_ = string.ascii_uppercase
-        for epi in self.essential_prime_implicants:
+        epis = self.epis_to_str(self.essential_prime_implicants, variable_names)
+        epis.sort()
+        for epi in epis:
             if self.minimal_expr:
-                self.minimal_expr += _DISJUNCTION
-            self.minimal_expr += '('
-            for i, x in enumerate(epi):
-                if x == '_':
+                self.minimal_expr += _OR
+            self.minimal_expr += epi
+
+    @staticmethod
+    def epis_to_str(epis, variable_names=None):
+        epis_str = []
+        if not variable_names:
+            variable_names = string.ascii_uppercase
+        for i, epi in enumerate(epis):
+            epis_str.append('(')
+            for j, variable in enumerate(epi):
+                if variable == '_':
                     continue
-                if x == 1:
-                    self.minimal_expr += vars_[i]
-                    self.minimal_expr += _CONJUNCTION
+                if epis_str[i] != '(':
+                    epis_str[i] += _AND
+                if variable == 1:
+                    epis_str[i] += variable_names[j]
                 else:
-                    self.minimal_expr += _NOT + vars_[i]
-                    self.minimal_expr += _CONJUNCTION
-            self.minimal_expr = self.minimal_expr[:len(self.minimal_expr) - 1]
-            self.minimal_expr += ')'
+                    epis_str[i] += _NOT + variable_names[j]
+            epis_str[i] += ')'
+        return epis_str
 
 
 def test_QMC():
