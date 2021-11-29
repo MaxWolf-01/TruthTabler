@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from bool_expressions import Node, translate_operators, ExpressionSolver
 from truth_table import getVariables, prepare_to_list
 from operator_signs import _NAND, _NOR, _NOT
@@ -28,32 +30,43 @@ class LogicGateMaker:
             else:
                 return f'(({expr}){sign}({expr}))'
 
-        def convert(expr: list, invert_next=False):
+        def convert(expr: list, invert_nested= None):
             converted_expr = ""
-            invert_this = invert_next
+            expr = remove_redundant_lists(expr)
+
+            invert_this = None
             for i, x in enumerate(expr):
-                while isinstance(x, list) and len(x) == 1:
-                    x = x[0]
+                x = remove_redundant_lists(x)
                 if not isinstance(x, list):
                     if x == 'NOT':
-                        if isinstance(expr[i + 1], list):
-                            if expr[i+1][0] == 'NOT':
-                                converted_expr = convert(expr[i+1][1])  # removes double negations
-                                break
-                        else:
-                            invert_this = True
+                        if isinstance(expr[i + 1], list) and expr[i+1][0] == 'NOT':
+                            converted_expr = convert(expr[i+1][1])  # removes double negations
+                            break
+                        if len(expr[i+1]) == 1:  # is variable
+                            invert_this = invert_nested = True
                     elif len(x) == 1:
                         converted_expr += f'{x}'
                     else:
                         converted_expr += f'{sign}'
+                        if invert_nested is None:
+                            invert_this = invert_nested = True
                 else:
-                    invert_next = i != 1 and len(x) == 3  # i == 1 or 2
-                    converted_expr += convert(x, invert_next)
-            if invert_this:
+                    nested_expr = convert(x, False)
+                    if len(x) == 3 and (i == 0 or expr[i-1] != 'NOT'):
+                        nested_expr = invert(nested_expr)
+                    converted_expr += nested_expr
+
+            if invert_this and invert_nested:
                 return invert(converted_expr)
             elif len(expr) == 1 or len(expr) == 2:
                 return converted_expr
             return f'({converted_expr})'
+
+        def remove_redundant_lists(x):
+            while isinstance(x, list) and len(x) == 1:
+                x = x[0]
+            return x
+
         return convert([uniform_expression])
 
 
@@ -205,11 +218,14 @@ class ORunifier(ExpressionUnifier):
         super().__init__('OR', expr)
 
 
-test_cases = ['(¬A+¬B)·(¬A+B)·(A+B)', '(A and ¬B)', '(¬A+¬B)·(¬A+B)', '(C·D)+(¬A·C)+(¬A·D)+(¬A·¬B)+(¬B·C)',
-              '(¬A·B)·(A+B)+(¬A+B)', '(A OR B)', 'NOT (A OR B)']
+test_cases = ['(A OR B)', '(¬A+¬B)·(¬A+B)·(A+B)', '(A and ¬B)', '(¬A+¬B)·(¬A+B)', '(C·D)+(¬A·C)+(¬A·D)+(¬A·¬B)+(¬B·C)',
+              '(¬A·B)·(A+B)+(¬A+B)', 'NOT (A OR B)', '(A)+(B·¬C·D)+(C·¬D)+(¬B·C)+(¬B·¬D)',
+              '((s and not p) and (r or q) or (not(s and not q) and not(r or q)))', 'p or (s or not r)',
+              'p or q or not r or s', 'p or (not q and not s) or (r or( not s and not q)) or (q and not r and s)']
 
 
 def test(expresssions: list):
+    tests = passed = len(test_cases)*2
     for expr in expresssions:
         result = ExpressionSolver(expr).solve()
         NOR = NorMaker(expr)
@@ -219,10 +235,13 @@ def test(expresssions: list):
         print(f'{expr} : {result}')
         if NAND_result != result:
             print(f'WRONG NAND : {NAND_result}')
+            passed -= 1
         if NOR_result != result:
             print(f'WRONG NOR : {NOR_result})')
-
-        print(f'\n{NOR.expr}\n{NAND.expr}\n')
+            passed -= 1
+        print(f'\n{NOR.expr}\n\n{NAND.expr}')
+        print('_____________________________')
+    print(f'Passed test cases ({passed}/{tests})')
 
 
 def main():
@@ -230,7 +249,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    pass
+    # main()
 
 # from truth_tabler import TruthTabler
 #
