@@ -1,8 +1,8 @@
-from copy import deepcopy
-
-from bool_expressions import Node, translate_operators, ExpressionSolver
-from truth_table import getVariables, prepare_to_list
+from bool_expressions import Node, ExpressionSolver
+from truth_table import getVariables
 from operator_signs import _NAND, _NOR, _NOT
+
+# TODO work only with lists and have A SINGLE method for converting it to string
 
 
 class LogicGateMaker:
@@ -15,8 +15,6 @@ class LogicGateMaker:
     def get_gate_expression(self, expr):
         unifier = globals()[self.operator + 'unifier']()
         unified_expr = unifier.unify(expr)
-        unified_expr = translate_operators(prepare_to_list(_format_str_expr(_list_expr_as_str(unified_expr))))
-        unified_expr = _extract_vars_from_lists_in_parsed_list_expr(_back_to_list_expr(unified_expr))
         self.expr = self.create_NAND_NOR(unified_expr)
         return self.expr
 
@@ -99,7 +97,6 @@ class ExpressionUnifier:
         if self.is_unified(node.get_expression_as_string()):
             return tree
         unified = self._convert(tree)
-        unified = self.remove_all_double_negations(unified)
         self.unified_expr = unified
         return unified
 
@@ -121,11 +118,10 @@ class ExpressionUnifier:
                 else:
                     left = x
         if de_morgan:
-            converted_expr = [_NOT, [[[_NOT, left]], sign, [_NOT, right]]]
-            # todo change to 'NOT' and use operator_signs only for printing ....
+            converted_expr = ['NOT', [[['NOT', left]], sign, ['NOT', right]]]
         else:
             if operator == 'NOT':
-                converted_expr = [_NOT, left]
+                converted_expr = ['NOT', left]
             else:
                 converted_expr = [left, sign, right]
         return converted_expr
@@ -141,32 +137,6 @@ class ExpressionUnifier:
     def contains_different_operators(expr, operator):
         return ('OR' in expr and 'AND' in expr) or operator not in expr
 
-    @staticmethod
-    def remove_all_double_negations(unified_expr):
-        change = True
-        old_expr = unified_expr
-        new_expr = []
-        while change:
-            new_expr = ExpressionUnifier._remove_double_negations(unified_expr)
-            change = new_expr != old_expr
-            old_expr = new_expr
-        return new_expr
-
-    @staticmethod
-    def _remove_double_negations(expr):
-        def _is_double_negated(expr_, i_):
-            return expr_[i_] == _NOT and isinstance(expr_[i_ + 1], list) and expr_[i_ + 1][0] == _NOT
-
-        new_expr = []
-        for i, x in enumerate(expr):
-            if isinstance(x, list):
-                new_expr.append(ExpressionUnifier._remove_double_negations(x))
-            elif _is_double_negated(expr, i):
-                return expr[i + 1][1]
-            else:
-                new_expr.append(x)
-        return new_expr
-
 
 def _extract_vars_from_lists_in_parsed_list_expr(parsed_expr):
     string_expr = _list_expr_as_str(parsed_expr)
@@ -178,22 +148,6 @@ def _extract_vars_from_lists_in_parsed_list_expr(parsed_expr):
             string_expr = string_expr.replace(f'["{var}"]', f'"{var}"', -1)
             change = string_expr != old_expr
     return eval(string_expr)
-
-
-def _back_to_list_expr(expr):
-    new_expr = ''
-    for i, x in enumerate(expr):
-        if x == '(':
-            new_expr += '['
-        elif x == ')':
-            new_expr += ']'
-        else:
-            if expr[i - 1] and expr[i - 1] != '(' and new_expr[-1:] != ',':
-                new_expr += ','
-            new_expr += f'"{x}"'
-            if expr[i + 1] and expr[i + 1] != ')' and new_expr[-1:] != ',':
-                new_expr += ','
-    return eval(new_expr)
 
 
 def _list_expr_as_str(parsed_expr):
@@ -226,22 +180,24 @@ test_cases = ['(A OR B)', '(¬A+¬B)·(¬A+B)·(A+B)', '(A and ¬B)', '(¬A+¬B)
 
 def test(expresssions: list):
     tests = passed = len(test_cases)*2
+    le_print = ''
     for expr in expresssions:
         result = ExpressionSolver(expr).solve()
         NOR = NorMaker(expr)
         NAND = NandMaker(expr)
         NAND_result = ExpressionSolver(NAND.expr).solve()
         NOR_result = ExpressionSolver(NOR.expr).solve()
-        print(f'{expr} : {result}')
+        le_print += f'{expr} : {result}\n'
         if NAND_result != result:
-            print(f'WRONG NAND : {NAND_result}')
+            le_print += f'WRONG NAND : {NAND_result}\n'
             passed -= 1
         if NOR_result != result:
-            print(f'WRONG NOR : {NOR_result})')
+            le_print += f'WRONG NOR : {NOR_result})\n'
             passed -= 1
-        print(f'\n{NOR.expr}\n\n{NAND.expr}')
-        print('_____________________________')
-    print(f'Passed test cases ({passed}/{tests})')
+        le_print += f'\n{NOR.expr}\n\n{NAND.expr}\n'
+        le_print += '_____________________________\n'
+    le_print += f'Passed test cases ({passed}/{tests})'
+    print(f'{le_print}  : LENGTH : {len(le_print)}')
 
 
 def main():
@@ -249,23 +205,4 @@ def main():
 
 
 if __name__ == '__main__':
-    pass
-    # main()
-
-# from truth_tabler import TruthTabler
-#
-# tabler = TruthTabler()
-# x1 = '(¬A+¬B)·(¬A+B)·(A+B)'
-# x2 = '(¬A+¬B)·(¬A+B)·(A+B)'
-# print(tabler.evaluate(remove_double_negations(de_morgan_outer(x1))) == tabler.evaluate(x1))
-# print(tabler.evaluate(remove_double_negations(de_morgan_inner(x2))) == tabler.evaluate(x2))
-
-#                                             (¬A+¬B)·(¬A+B)·(A+B) # CCNF
-#                                            ¬(¬(¬A+¬B)+¬(¬A+B)+¬(A+B)) same as above  # CCNF to OR -> demorgan outer
-#                                            ¬(A·B)·¬(A·¬B)·¬(¬A·¬B) same as above # CCNF to AND -> demorgan inner
-#
-#                          should b nand      (((A↓B) ↓ (A ↓ (B↓B))) ↓ ((A↓B) ↓ (A ↓ (B↓B))) ↓ (((A↓A) ↓ (B↓B)))) ↓
-#                                             (((A↓B) ↓ (A ↓ (B↓B))) ↓ ((A↓B) ↓ (A ↓ (B↓B))) ↓ (((A↓A) ↓ (B↓B))))
-#                                             (¬A·¬B)+(A·B) CDNF
-#                                             ¬(A+B)+¬(¬A+¬B) CDNF sao. # CDNF to OR -> demorgan inner
-#                                             ¬(¬(¬A·¬B)·¬(A·B)) CDNF sao. # CDNF to AND -> demorgan outer
+    main()
