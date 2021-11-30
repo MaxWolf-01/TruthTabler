@@ -1,4 +1,4 @@
-from operator_signs import _AND, _OR, _NOT
+from operator_symbols import OPERATOR_SIGNS
 from truth_table import TruthTable
 
 
@@ -34,7 +34,7 @@ class NormalForm:
                     if row[j] if cdnf_else_ccnf else not row[j]:
                         nf.append(var)
                     else:
-                        nf.append(_NOT)
+                        nf.append(OPERATOR_SIGNS['NOT'])
                         nf.append(var)
                 nf.append(')')
         return ''.join(nf)
@@ -42,9 +42,9 @@ class NormalForm:
 
 class CDNF(NormalForm):
     def __init__(self, truth_table, results):
-        super(CDNF, self).__init__(truth_table, results, [True, _AND, _OR])
+        super(CDNF, self).__init__(truth_table, results, [True, OPERATOR_SIGNS['AND'], OPERATOR_SIGNS['OR']])
 
 
 class CCNF(NormalForm):
     def __init__(self, truth_table, results):
-        super(CCNF, self).__init__(truth_table, results, [False, _OR, _AND])
+        super(CCNF, self).__init__(truth_table, results, [False, OPERATOR_SIGNS['OR'], OPERATOR_SIGNS['AND']])

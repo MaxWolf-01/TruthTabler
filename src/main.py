@@ -2,7 +2,7 @@
 # import pstats
 
 from truth_tabler import TruthTabler
-from bool_expressions import OPERATORS
+from operator_symbols import OPERATORS
 from Exceptions import BracketException, InvalidExpressionException
 
 if __name__ == '__main__':

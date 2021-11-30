@@ -3,7 +3,7 @@ import string
 from copy import deepcopy
 import json
 
-from operator_signs import _AND, _OR, _NOT
+from operator_symbols import OPERATOR_SIGNS
 from truth_table import createTT
 
 import cProfile
@@ -270,7 +270,7 @@ class QuineMcCluskey:
         epis.sort()
         for epi in epis:
             if self.minimal_expr:
-                self.minimal_expr += _OR
+                self.minimal_expr += OPERATOR_SIGNS['OR']
             self.minimal_expr += epi
 
     @staticmethod
@@ -284,11 +284,11 @@ class QuineMcCluskey:
                 if variable == '_':
                     continue
                 if epis_str[i] != '(':
-                    epis_str[i] += _AND
+                    epis_str[i] += OPERATOR_SIGNS['AND']
                 if variable == 1:
                     epis_str[i] += variable_names[j]
                 else:
-                    epis_str[i] += _NOT + variable_names[j]
+                    epis_str[i] += OPERATOR_SIGNS['NOT'] + variable_names[j]
             epis_str[i] += ')'
         return epis_str
 
@@ -319,19 +319,20 @@ def test():
 if __name__ == '__main__':
     Q = QuineMcCluskey()
     while True:
+        vars_ = input("Variables(single letter per variable): ").replace(' ', '')
         print("Enter digit one by one? [y/n]")
+        TTvalues = []
         if input() == 'y':
-            length = int(input("Table length: "))
-            TTvalues = []
+            length = 2**len(vars_)  # int(input("Table length: "))
             for index in range(length):
                 in_ = input(f'{index}: ')
                 if in_ in 'xX':
                     TTvalues.append('X')
                 else:
                     TTvalues.append(int(in_))
-            Q.minimize(TTvalues)
         else:
-            Q.minimize(json.loads(input('Truthtable list: ')))
+            TTvalues = json.loads(input('Truthtable list: '))
+        Q.minimize(TTvalues, variable_names=vars_)
         print(Q.minimal_expr)
 
     # Q = QuineMcCluskey()
