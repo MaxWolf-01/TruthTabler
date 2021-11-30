@@ -1,8 +1,9 @@
+import traceback
+
+from parsing import parse_expr_to_list
 from circuit_creator_helper_methods import *
 from circuit_creator_static_variables import *
-from truth_table import prepare, getVariables
-from bool_expressions import Node, translate_operators
-import traceback
+from truth_table import split_to_list, getVariables
 
 LINE_WIDTH = 0
 DRAW_NOT = False
@@ -200,16 +201,14 @@ def create_circuit(tree, variables, draw_not=False):
 
 
 def create_circuit_from_expr(expr):
-    node = Node(expr)
-    tree = node.get_expression_as_lists()
-    vars_ = getVariables(prepare(expr))
+    tree = parse_expr_to_list(expr, vars_in_extra_lists=True)
+    vars_ = getVariables(split_to_list(expr))
     return create_circuit(tree, vars_)
 
 
 def create_circuit_string_from_expr(expr):
-    node = Node(expr)
-    tree = node.get_expression_as_lists()
-    vars_ = getVariables(prepare(expr))
+    tree = parse_expr_to_list(expr, vars_in_extra_lists=True)
+    vars_ = getVariables(split_to_list(expr))
     return space_to_string(create_circuit(tree, vars_), vars_)
 
 

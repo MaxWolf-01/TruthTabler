@@ -6,7 +6,7 @@ import circuit_creator
 import truth_table
 from bool_expressions import ExpressionSolver
 from normal_forms import CCNF, CDNF
-from operator_signs import _AND, _OR
+from operator_symbols import OPERATOR_SIGNS
 from optimization import QuineMcCluskey
 
 
@@ -28,9 +28,8 @@ class TruthTabler:
         self.__init__()
         self.TT = truth_table.TruthTable(expr)
         self.expr = expr
-        self.xTree = ExpressionSolver(expr, self.TT)
         print('Solving expression...')
-        self.result = self.xTree.solve()
+        self.result = ExpressionSolver().solve(expr)
         print('Creating normal forms...')
         self.CDNF = CDNF(self.TT, self.result)
         self.CCNF = CCNF(self.TT, self.result)
@@ -52,7 +51,7 @@ class TruthTabler:
 
         prettyTable.field_names = field_names
         prettyTable.add_rows(rows)
-        print(prettyTable, f'\n Normal Forms: ({_AND} = AND; {_OR} = OR)'
+        print(prettyTable, f'\n Normal Forms: ({OPERATOR_SIGNS["AND"]} = AND; {OPERATOR_SIGNS["OR"]} = OR)'
                            f'\n   CDNF:\n \t{self.CDNF}'
                            f'\n   CCNF:\n \t{self.CCNF}\n'
                            f'\n Minimal expression:'
