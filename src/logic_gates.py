@@ -1,69 +1,66 @@
-from bool_expressions import Node, ExpressionSolver
+from bool_expressions import ExpressionSolver
+from parsing import Node, list_expr_to_string, remove_redundant_lists
 from truth_table import getVariables
-from operator_signs import _NAND, _NOR, _NOT
-
-# TODO work only with lists and have A SINGLE method for converting it to string
 
 
 class LogicGateMaker:
     def __init__(self, operator, expr=None):
         self.operator = operator
         self.expr = None
+        self.string_expr = None
         if expr:
-            self.get_gate_expression(expr)
+            self.make_gate_expr(expr)
 
-    def get_gate_expression(self, expr):
+    def make_gate_expr(self, expr):
         unifier = globals()[self.operator + 'unifier']()
         unified_expr = unifier.unify(expr)
-        self.expr = self.create_NAND_NOR(unified_expr)
-        return self.expr
+        self.expr = self._create_NAND_NOR(unified_expr)
+        self.string_expr = list_expr_to_string(self.expr)
+        return self.string_expr
 
-    def create_NAND_NOR(self, uniform_expression):
-        sign = globals()[f'_N{self.operator}']
+    def _create_NAND_NOR(self, uniform_expression):
+        sign = f'N{self.operator}'
 
         def invert(expr):
             if len(expr) == 1:
                 # no useless parenthesis aroung single variables for readability
-                return f'({expr}{sign}{expr})'
+                return [expr[0], sign, expr[0]]
             else:
-                return f'(({expr}){sign}({expr}))'
+                return [[expr], sign, [expr]]
 
-        def convert(expr: list, invert_nested= None):
-            converted_expr = ""
+        def convert(expr: list, invert_nested=None):
             expr = remove_redundant_lists(expr)
-
+            converted_expr = []
             invert_this = None
             for i, x in enumerate(expr):
-                x = remove_redundant_lists(x)
+                # x = remove_redundant_lists(x)
                 if not isinstance(x, list):
                     if x == 'NOT':
-                        if isinstance(expr[i + 1], list) and expr[i+1][0] == 'NOT':
-                            converted_expr = convert(expr[i+1][1])  # removes double negations
+                        if isinstance(expr[i + 1], list) and expr[i + 1][0] == 'NOT':
+                            converted_expr = convert(expr[i + 1][1])  # removes double negations
                             break
-                        if len(expr[i+1]) == 1:  # is variable
+                        if len(expr[i + 1]) == 1:  # is variable
                             invert_this = invert_nested = True
                     elif len(x) == 1:
-                        converted_expr += f'{x}'
+                        converted_expr.append(x)
                     else:
-                        converted_expr += f'{sign}'
+                        converted_expr.append(sign)
                         if invert_nested is None:
                             invert_this = invert_nested = True
                 else:
                     nested_expr = convert(x, False)
-                    if len(x) == 3 and (i == 0 or expr[i-1] != 'NOT'):
+                    if len(x) == 3 and (i == 0 or expr[i - 1] != 'NOT'):
                         nested_expr = invert(nested_expr)
-                    converted_expr += nested_expr
+                    if len(nested_expr) == 1:
+                        converted_expr.append(nested_expr[0])
+                    else:
+                        converted_expr.append(nested_expr)
 
             if invert_this and invert_nested:
                 return invert(converted_expr)
             elif len(expr) == 1 or len(expr) == 2:
                 return converted_expr
-            return f'({converted_expr})'
-
-        def remove_redundant_lists(x):
-            while isinstance(x, list) and len(x) == 1:
-                x = x[0]
-            return x
+            return [converted_expr]
 
         return convert([uniform_expression])
 
@@ -93,7 +90,7 @@ class ExpressionUnifier:
 
     def unify(self, expr):
         node = Node(expr)
-        tree = _extract_vars_from_lists_in_parsed_list_expr(node.get_expression_as_lists())
+        tree = node.get_expression_as_lists()
         if self.is_unified(node.get_expression_as_string()):
             return tree
         unified = self._convert(tree)
@@ -172,21 +169,22 @@ class ORunifier(ExpressionUnifier):
         super().__init__('OR', expr)
 
 
-test_cases = ['(A OR B)', '(¬A+¬B)·(¬A+B)·(A+B)', '(A and ¬B)', '(¬A+¬B)·(¬A+B)', '(C·D)+(¬A·C)+(¬A·D)+(¬A·¬B)+(¬B·C)',
-              '(¬A·B)·(A+B)+(¬A+B)', 'NOT (A OR B)', '(A)+(B·¬C·D)+(C·¬D)+(¬B·C)+(¬B·¬D)',
-              '((s and not p) and (r or q) or (not(s and not q) and not(r or q)))', 'p or (s or not r)',
-              'p or q or not r or s', 'p or (not q and not s) or (r or( not s and not q)) or (q and not r and s)']
+def test():
+    test_cases = ['(A OR B)', '(¬A+¬B)·(¬A+B)·(A+B)', '(A and ¬B)', '(¬A+¬B)·(¬A+B)',
+                  '(C·D)+(¬A·C)+(¬A·D)+(¬A·¬B)+(¬B·C)',
+                  '(¬A·B)·(A+B)+(¬A+B)', 'NOT (A OR B)', '(A)+(B·¬C·D)+(C·¬D)+(¬B·C)+(¬B·¬D)',
+                  '((s and not p) and (r or q) or (not(s and not q) and not(r or q)))', 'p or (s or not r)',
+                  'p or q or not r or s', 'p or (not q and not s) or (r or( not s and not q)) or (q and not r and s)',
+                  '(P)+(Q·¬R·S)+ ((not Q and not S) or R) +(¬Q·¬S)']
 
-
-def test(expresssions: list):
-    tests = passed = len(test_cases)*2
+    tests = passed = len(test_cases) * 2
     le_print = ''
-    for expr in expresssions:
-        result = ExpressionSolver(expr).solve()
+    for expr in test_cases:
+        result = ExpressionSolver().solve(expr)
         NOR = NorMaker(expr)
         NAND = NandMaker(expr)
-        NAND_result = ExpressionSolver(NAND.expr).solve()
-        NOR_result = ExpressionSolver(NOR.expr).solve()
+        NAND_result = ExpressionSolver().solve(NAND.string_expr)
+        NOR_result = ExpressionSolver().solve(NOR.string_expr)
         le_print += f'{expr} : {result}\n'
         if NAND_result != result:
             le_print += f'WRONG NAND : {NAND_result}\n'
@@ -194,14 +192,19 @@ def test(expresssions: list):
         if NOR_result != result:
             le_print += f'WRONG NOR : {NOR_result})\n'
             passed -= 1
-        le_print += f'\n{NOR.expr}\n\n{NAND.expr}\n'
+        le_print += f'\n{NOR.string_expr}\n\n{NAND.string_expr}\n'
         le_print += '_____________________________\n'
     le_print += f'Passed test cases ({passed}/{tests})'
     print(f'{le_print}  : LENGTH : {len(le_print)}')
 
 
 def main():
-    test(test_cases)
+    # test()
+    while True:
+        expr = input('Expression: ')
+        NA = NandMaker(expr)
+        NO = NorMaker(expr)
+        print(f'{NA.string_expr}\n\n{NO.string_expr}')
 
 
 if __name__ == '__main__':
