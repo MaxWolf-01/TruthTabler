@@ -28,7 +28,7 @@ if __name__ == '__main__':
                 # stats.sort_stats(pstats.SortKey.TIME)
                 # stats.print_stats()
 
-                truthTabler.print()
+                truthTabler.print_with_options()
             except (BracketException, InvalidExpressionException) as e:
-                print('   ', e)
+                print('', e)
 
