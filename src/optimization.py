@@ -1,13 +1,12 @@
 import math
 import string
 from copy import deepcopy
-import json
 
 from operator_symbols import OPERATOR_SIGNS
 from truth_table import createTT
 
-import cProfile
-import pstats
+# import cProfile
+# import pstats
 
 
 def factor_expression():
@@ -15,6 +14,7 @@ def factor_expression():
 
 
 class QuineMcCluskey:
+    # TODO ?: If more than half of result rows are 1s => use opposite values and negate afterwards?
     def __init__(self, truth_table_result=None, variable_names=None):
         self.TT = []
         self.minterms = []
@@ -293,37 +293,34 @@ class QuineMcCluskey:
         return epis_str
 
 
-def test_QMC():
-    QMC = QuineMcCluskey()
-    QMC.minimize(
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0,
-         0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1,
-         1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0]
-    )
-    print(QMC.minimal_expr)
+# def test_QMC():
+#     QMC = QuineMcCluskey()
+#     QMC.minimize(
+#        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0,
+#         0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+#         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1,
+#          1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0]
+#     )
+#     print(QMC.minimal_expr)
+#
+#
+# def test():
+#     with cProfile.Profile() as pr:
+#         test_QMC()
+#
+#     stats = pstats.Stats(pr)
+#     stats.sort_stats(pstats.SortKey.TIME)
+#     stats.print_stats()
 
 
-def test():
-    with cProfile.Profile() as pr:
-        test_QMC()
-
-    stats = pstats.Stats(pr)
-    stats.sort_stats(pstats.SortKey.TIME)
-    stats.print_stats()
-
-
-# if __name__ == '__main__':
-#     test()
-
-if __name__ == '__main__':
+def main():
     Q = QuineMcCluskey()
     while True:
         vars_ = input("Variables(single letter per variable): ").replace(' ', '')
         print("Enter digit one by one? [y/n]")
         TTvalues = []
         if input() == 'y':
-            length = 2**len(vars_)  # int(input("Table length: "))
+            length = 2 ** len(vars_)  # int(input("Table length: "))
             for index in range(length):
                 in_ = input(f'{index}: ')
                 if in_ in 'xX':
@@ -331,10 +328,13 @@ if __name__ == '__main__':
                 else:
                     TTvalues.append(int(in_))
         else:
-            TTvalues = json.loads(input('Truthtable list: '))
+            TTvalues = eval(input('Truthtable list: '))
         Q.minimize(TTvalues, variable_names=vars_)
         print(Q.minimal_expr)
 
+
+if __name__ == '__main__':
+    main()
     # Q = QuineMcCluskey()
     # print(Q.minimize([1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0]))  # cyclic
     # print(TruthTabler(Q.minimal_expr).result == [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0])
