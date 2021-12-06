@@ -92,7 +92,7 @@ class TruthTabler:
 
     def print_with_options(self):
         print(self.create_prettyTable())
-        print("Type H for option info.")
+        print("\nType H for option info.")
         info = self.get_option_description()
         while True:
             in_ = input("Enter option: ").upper()
@@ -104,15 +104,15 @@ class TruthTabler:
                 try:
                     self.print_option(in_)
                 except KeyError as e:
-                    print(f'Option {e.args[0]} not found.\n{info}')
+                    print(f'\nOption {e.args[0]} not found.{info}')
 
     def print_option(self, option):
         print(self.print_options[option], '\n')
 
     def get_print_options(self):
-        DNAND = f'\n With NAND:' \
+        CNAND = f'\n With NAND:' \
                 f'\n{self.NAND_circuit}'
-        DNOR = f'\n With NOR:' \
+        CNOR = f'\n With NOR:' \
                f'\n{self.NOR_circuit}'
         return {'NF': f'\n   CDNF:\n \t{self.CDNF}'
                       f'\n   CCNF:\n \t{self.CCNF}',
@@ -124,18 +124,33 @@ class TruthTabler:
                      f'\n  {self.NOR}',
                 'C': self.expr_circuit,
                 'CM': self.minimal_expr_circuit,
-                'CG': f'{DNAND}\n{DNOR}',
-                'CNAND': DNAND,
-                'CNOR': DNOR
+                'CG': f'{CNAND}\n{CNOR}',
+                'CNAND': CNAND,
+                'CNOR': CNOR
                 }
 
     def get_option_description(self):
-        print_options_desciptions = ["normal forms", "minimal expression", "with NAND and NOR",
-                                     "as circuit", "minimal expression as circuit", "NAND and NOR as circuit",
-                                     "NAND as Circuit", "NOR as circuit"]
-        nl = '\n'
+        option_desciptions = ["normal forms", "minimal expression", "with NAND and NOR",
+                              "as circuit", "minimal expression as circuit", "NAND and NOR as circuit",
+                              "NAND as Circuit", "NOR as circuit"]
+
         options_and_descriptions = \
-            f'\nChoose from the following options to show expression...\n' \
-            f'{nl.join(f"{op} : {desc}" for op, desc in zip(self.print_options, print_options_desciptions))}' \
-            f'\n"new/exit" for new expression. "H" for Help\n'
+            f'\n"new/exit/x" for new expression. "H" for Help\n' \
+            f'\nEnter one of the following options to show expression...\n' \
+            f'{self.build_option_descr_str(option_desciptions)}'
+        # f'{nl.join(f"{op} : {desc}" for op, desc in zip(self.print_options, option_desciptions))}\n'
         return options_and_descriptions
+
+    def build_option_descr_str(self, option_descr):
+        options_with_description = ''
+        option_keys = list(self.print_options)
+        for i, x in enumerate(zip(self.print_options, option_descr)):
+            if i < len(self.print_options) / 2:
+                left_side = f'{x[0]} : {x[1]} '
+                adjust = 24 - len(left_side)
+                options_with_description += f'{left_side}{" "*adjust}'
+                options_with_description += f'| {option_keys[i + len(self.print_options) // 2]} : ' \
+                                            f'{option_descr[i + len(self.print_options) // 2]}\n'
+            elif len(self.print_options) % 2 and x[0] == option_keys[i]:
+                options_with_description += f'{x[0]} : {x[1]}\n'
+        return options_with_description
