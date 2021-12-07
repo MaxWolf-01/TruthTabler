@@ -111,6 +111,8 @@ class ExpressionSolver:
             expr = self._prepare_expression(expr)
         xS = AtomicExpressionSolver(TT)
         expression = []
+        if len(expr) == 1 and len(expr[0]) == 1:
+            return TT.table
         for i, x in enumerate(expr):
             if self._has_double_negation(expr, i):
                 expression = self.solve(expr[i + 1][1], is_root=False, TT=TT)

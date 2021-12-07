@@ -12,6 +12,8 @@ class LogicGateMaker:
             self.make_gate_expr(expr)
 
     def make_gate_expr(self, expr):
+        if len(expr) == 1:
+            return self.expr
         unifier = globals()[self.operator + 'unifier']()
         unified_expr = unifier.unify(expr)
         self.expr = self._create_NAND_NOR(unified_expr)
