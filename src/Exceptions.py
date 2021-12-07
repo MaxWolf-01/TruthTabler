@@ -1,13 +1,18 @@
 from operator_symbols import OPERATORS
 
 
-class BracketException(Exception):
+class TablerException(Exception):
+    def __init__(self, msg=''):
+        super(TablerException, self).__init__(msg)
+
+
+class BracketException(TablerException):
     def __init__(self, expr, msg):
         super(Exception, self).__init__(f'Number of opening and closing brackets do not match: {msg[0]} != {msg[1]} '
                                         f'for: "{expr}"')
 
 
-class InvalidExpressionException(Exception):
+class InvalidExpressionException(TablerException):
     def __init__(self, msg):
         super(InvalidExpressionException, self).__init__(f'Invalid expression: {msg}')
 
