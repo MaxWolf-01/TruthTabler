@@ -1,4 +1,4 @@
-from operator_symbols import OPERATORS
+from operator_symbols import SUPPORTED_OPERATORS
 
 
 class TablerException(Exception):
@@ -19,7 +19,6 @@ class InvalidExpressionException(TablerException):
 
 class InvalidOperatorException(InvalidExpressionException):
     def __init__(self, operator=''):
-        nl = '\n'
         info = f"\nInvalid operator in expression '{operator}'.\nSupported operators are:\n" \
-               f"{nl.join(str(OPERATORS[k]) for k in OPERATORS)}\n"
+               f"{SUPPORTED_OPERATORS}\n"
         super(InvalidOperatorException, self).__init__(info)
