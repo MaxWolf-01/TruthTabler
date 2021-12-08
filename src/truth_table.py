@@ -7,7 +7,7 @@ from Exceptions import BracketException, InvalidExpressionException
 def getVariables(expr):
     # Variables have to be a letter and of length 1
     if isinstance(expr, int):
-        return None  # todo ?
+        return None
     if isinstance(expr, str):
         expr = split_to_list(expr)
     vars_ = sorted({x for x in expr if x.isalpha() and len(x) == 1})
@@ -47,14 +47,15 @@ class TruthTable:
 
 
 def main():
-    print('Make a truth table:')
-    in_ = int(input("Number of variables: "))
-    vars_ = []
-    for i in range(in_):
-        vars_.append(input(f"Variable {i}: "))
+    print(get_pretty_truthtable())
+
+
+def get_pretty_truthtable(vars_=None):
+    if vars_ is None:
+        vars_ = set(input('T> variables: ').replace(' ', ''))
     field_names = ['#', *vars_]
-    TT = createTT(in_)
-    if input('Reverse Table (=>from all 1s to all 0s) [y/n]? :') == 'y':
+    TT = createTT(len(vars_))
+    if input('Reverse Table (->from all 1s to all 0s)\nT> [y/n]? :') == 'y':
         TT.reverse()
     rows = [[i, ] for i in range(len(TT))]
     for i in range(len(rows)):
@@ -62,7 +63,7 @@ def main():
     pT = PrettyTable()
     pT.field_names = field_names
     pT.add_rows(rows)
-    print(pT)
+    return pT
 
 
 if __name__ == '__main__':
