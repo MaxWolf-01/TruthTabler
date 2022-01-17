@@ -1,3 +1,4 @@
+Visualizations of circuits made possible by [Lelleck](https://github.com/Lelleck). <br/>
 Can solve any boolean expression and create CCNF(POS), CDNF(SOP) and minimize it using the Quine-McCluskey Method.
 Minimization for expressions with 7 variables and beyond may take some time (and memory).<br />
 Also converts boolean expressions to only use NAND or NOR gates and can draw them. <br />
