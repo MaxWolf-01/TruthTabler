@@ -48,11 +48,13 @@ class TruthTabler:
         self.NOR = NorMaker().make_gate_expr(self.expr)
         print('Creating Circuits...\n')
         self.variables = getVariables(self.expr)
-        self.expr_circuit = space_to_string(create_circuit_from_expr(self.expr), self.variables)
-        self.minimal_expr_circuit = space_to_string(create_circuit_from_expr(self.minimal_expr), self.variables)
-        self.NAND_circuit = space_to_string(create_circuit_from_expr(self.NAND), self.variables)
-        self.NOR_circuit = space_to_string(create_circuit_from_expr(self.NOR), self.variables)
-
+        try:
+            self.expr_circuit = space_to_string(create_circuit_from_expr(self.expr), self.variables)
+            self.minimal_expr_circuit = space_to_string(create_circuit_from_expr(self.minimal_expr), self.variables)
+            self.NAND_circuit = space_to_string(create_circuit_from_expr(self.NAND), self.variables)
+            self.NOR_circuit = space_to_string(create_circuit_from_expr(self.NOR), self.variables)
+        except Exception:
+            print("Ooops: Failed to create circuits :(")
         self.attribute_options = self.get_print_options()
         self.option_descr = self.get_option_description()
 
